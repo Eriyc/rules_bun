@@ -32,15 +32,13 @@ _BUN_ARCHIVES = {
 _BUN_GITHUB_RELEASE_URL_TEMPLATE = "https://github.com/oven-sh/bun/releases/download/bun-v{}/{}"
 
 
-def _declare_bun_repo(name, asset, sha256, binary, version):
-    if native.existing_rule(name):
-        return
-
-    http_archive(
-        name = name,
-        urls = [_BUN_GITHUB_RELEASE_URL_TEMPLATE.format(version, asset)],
-        sha256 = sha256,
-        build_file_content = """
+def _bun_repos_impl(_ctx):
+    for name, metadata in _BUN_ARCHIVES.items():
+        http_archive(
+            name = name,
+            urls = [_BUN_GITHUB_RELEASE_URL_TEMPLATE.format(BUN_VERSION, metadata["asset"])],
+            sha256 = metadata["sha256"],
+            build_file_content = """
 exports_files(["{binary}"])
 
 filegroup(
@@ -48,27 +46,10 @@ filegroup(
     srcs = ["{binary}"],
     visibility = ["//visibility:public"],
 )
-""".format(binary = binary),
-    )
-
-
-def bun_repositories(version = BUN_VERSION):
-    for name, metadata in _BUN_ARCHIVES.items():
-        _declare_bun_repo(
-            name = name,
-            asset = metadata["asset"],
-            sha256 = metadata["sha256"],
-            binary = metadata["binary"],
-            version = version,
+""".format(binary = metadata["binary"]),
         )
 
 
-def bun_register_toolchains(version = BUN_VERSION):
-    bun_repositories(version = version)
-    native.register_toolchains(
-        "//bun:darwin_aarch64_toolchain",
-        "//bun:darwin_x64_toolchain",
-        "//bun:linux_aarch64_toolchain",
-        "//bun:linux_x64_toolchain",
-        "//bun:windows_x64_toolchain",
-    )
+bun = module_extension(
+    implementation = _bun_repos_impl,
+)

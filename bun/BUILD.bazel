@@ -1,6 +1,8 @@
 load(":toolchain.bzl", "bun_toolchain")
 load(":version.bzl", "BUN_VERSION")
 
+exports_files(["defs.bzl"])
+
 toolchain_type(name = "toolchain_type")
 
 bun_toolchain(
