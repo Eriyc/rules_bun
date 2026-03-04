@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            phase8_target: linux-x64
+          - os: macos-14
+            phase8_target: darwin-arm64
+          - os: windows-latest
+            phase8_target: windows
+    runs-on: ${{ matrix.os }}
+    env:
+      USE_BAZEL_VERSION: 9.0.0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bazel-contrib/setup-bazel@0.15.0
+      - name: Run tests (${{ matrix.phase8_target }})
+        run: bazel test //tests/...

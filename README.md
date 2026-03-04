@@ -45,3 +45,9 @@ Phase 7 bootstrap is in place:
 
 - Bzlmod `bun_install` module extension (`/bun/extensions.bzl`) using Bazel 9-compatible extension/tag syntax
 - Focused module-extension shape test (`//tests/install_extension_test:all`)
+
+Phase 8 bootstrap is in place:
+
+- CI matrix workflow for linux-x64, darwin-arm64, and windows (`/.github/workflows/ci.yml`)
+- Bazel 9 pin in CI via `USE_BAZEL_VERSION=9.0.0`
+- Focused CI matrix shape test (`//tests/ci_test:all`)
