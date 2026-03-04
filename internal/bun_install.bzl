@@ -61,7 +61,7 @@ stderr:
     )
 
 
-_bun_install_repository = repository_rule(
+bun_install_repository = repository_rule(
     implementation = _bun_install_repository_impl,
     attrs = {
         "package_json": attr.label(mandatory = True, allow_single_file = True),
@@ -73,6 +73,8 @@ _bun_install_repository = repository_rule(
         "bun_windows_x64": attr.label(default = "@bun_windows_x64//:bun", allow_single_file = True),
     },
 )
+
+_bun_install_repository = bun_install_repository
 
 
 def bun_install(name, package_json, bun_lockfile):
@@ -91,7 +93,7 @@ def bun_install(name, package_json, bun_lockfile):
       )
     """
 
-    _bun_install_repository(
+    bun_install_repository(
         name = name,
         package_json = package_json,
         bun_lockfile = bun_lockfile,
