@@ -1,0 +1,22 @@
+load("//bun:defs.bzl", "bun_bundle", "ts_library")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    "README.md",
+    "package.json",
+    "packages/pkg-a/package.json",
+    "packages/pkg-b/package.json",
+])
+
+ts_library(
+    name = "pkg_a_lib",
+    srcs = ["packages/pkg-a/index.ts"],
+)
+
+bun_bundle(
+    name = "pkg_b_bundle",
+    entry_points = ["packages/pkg-b/main.ts"],
+    deps = [":pkg_a_lib"],
+    target = "bun",
+)

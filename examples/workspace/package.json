@@ -1,0 +1,10 @@
+{
+  "name": "workspace-root",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "catalog": {
+    "lodash": "^4.17.21"
+  }
+}
