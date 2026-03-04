@@ -2,6 +2,11 @@
 
 Bazel rules for bun.
 
+## Rule reference
+
+- Generated API docs: [docs/rules.md](docs/rules.md)
+- Regenerate: `bazel build //docs:rules_md && cp bazel-bin/docs/rules.md docs/rules.md`
+
 ## Use
 
 These steps show how to consume a tagged release of `rules_bun` in a separate Bazel workspace.

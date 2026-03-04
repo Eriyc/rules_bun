@@ -63,14 +63,26 @@ exec "${{bun_bin}}" --bun test {src_args} "$@"
 
 bun_test = rule(
     implementation = _bun_test_impl,
+    doc = """Runs Bun tests as a Bazel test target.
+
+Supports Bazel test filtering (`--test_filter`) and coverage integration.
+""",
     attrs = {
         "srcs": attr.label_list(
             mandatory = True,
             allow_files = [".js", ".ts", ".jsx", ".tsx", ".mjs", ".cjs"],
+            doc = "Test source files passed to `bun test`.",
         ),
-        "node_modules": attr.label(),
-        "deps": attr.label_list(),
-        "data": attr.label_list(allow_files = True),
+        "node_modules": attr.label(
+            doc = "Optional label providing Bun/npm package files in runfiles.",
+        ),
+        "deps": attr.label_list(
+            doc = "Library dependencies required by test sources.",
+        ),
+        "data": attr.label_list(
+            allow_files = True,
+            doc = "Additional runtime files needed by tests.",
+        ),
     },
     test = True,
     toolchains = ["//bun:toolchain_type"],

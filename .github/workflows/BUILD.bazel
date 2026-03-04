@@ -1,3 +1,6 @@
 package(default_visibility = ["//visibility:public"])
 
-exports_files(["ci.yml"])
+exports_files([
+    "ci.yml",
+    "pages.yml",
+])
