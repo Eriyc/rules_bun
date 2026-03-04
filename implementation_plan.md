@@ -15,6 +15,7 @@ A Bazel ruleset that integrates the [Bun](https://bun.sh) JavaScript runtime nat
 **Where to start.** Every Bazel ruleset begins with the toolchain — nothing else works without it.
 
 ### 1.1 Repo Structure
+
 ```
 bun_rules/
 ├── MODULE.bazel             # Bzlmod module definition
@@ -39,6 +40,7 @@ bun_rules/
 ```
 
 ### 1.2 Toolchain Rule (`toolchain.bzl`)
+
 ```python
 BunToolchainInfo = provider(fields = ["bun_bin", "version"])
 
@@ -52,7 +54,9 @@ bun_toolchain = rule(
 ```
 
 ### 1.3 Binary Downloads (`repositories.bzl`)
+
 Use `http_file` to fetch platform-specific Bun binaries:
+
 - `bun-linux-x64`, `bun-linux-aarch64`
 - `bun-darwin-x64`, `bun-darwin-aarch64`
 - `bun-windows-x64.exe`
@@ -60,6 +64,7 @@ Use `http_file` to fetch platform-specific Bun binaries:
 Use SHA256 checksums pinned per Bun release. Register via `register_toolchains()`.
 
 **Tests needed:**
+
 - `toolchain_resolution_test` — assert the correct binary is selected per `--platforms`
 - `bun --version` smoke test via a `sh_test`
 
@@ -70,6 +75,7 @@ Use SHA256 checksums pinned per Bun release. Register via `register_toolchains()
 Replaces `npm install` / `yarn`. This is the highest-leverage rule because every downstream rule depends on it.
 
 ### Rule Design
+
 ```python
 bun_install(
     name = "node_modules",
@@ -83,12 +89,14 @@ bun_install(
 - Must be hermetic: no network in actions (vendor or use a repository rule to pre-fetch)
 
 ### Key Challenges
+
 - `bun.lockb` is binary — you need to commit it and treat it as a source file
 - Network access during `bun install` breaks Bazel's sandbox; solve with either:
   - A **repository rule** that runs install at analysis time (like `npm_install` in rules_nodejs)
   - Or a **module extension** in Bzlmod
 
 **Tests needed:**
+
 - Install succeeds with a valid `package.json` + `bun.lockb`
 - Build fails (with a clear error) when `bun.lockb` is out of date
 - Determinism test: run install twice, assert identical output digest
@@ -112,6 +120,7 @@ bun_binary(
 - Handles both `.js` and `.ts` natively (no transpile step needed)
 
 **Tests needed:**
+
 - `bun_binary` produces a runnable target (`bazel run`)
 - TypeScript entry points work without separate compilation
 - `data` deps are available at runtime
@@ -134,6 +143,7 @@ bun_test(
 - Outputs JUnit XML for `--test_output` compatibility (use `bun test --reporter junit`)
 
 **Tests needed:**
+
 - Passing test suite returns exit 0
 - Failing test suite returns exit non-0 (Bazel marks as FAILED)
 - Test filtering via `--test_filter` works
@@ -161,6 +171,7 @@ bun_bundle(
 - Supports splitting, external packages, define/env vars
 
 **Tests needed:**
+
 - Output file exists and has non-zero size
 - `minify = True` produces smaller output than `minify = False`
 - `external` packages are not bundled
@@ -183,6 +194,7 @@ ts_library(
 ```
 
 **Tests needed:**
+
 - `deps` correctly propagate transitive sources to `bun_bundle` and `bun_test`
 - Circular dep detection (or at least graceful failure)
 
@@ -190,27 +202,52 @@ ts_library(
 
 ## Required Tests Summary
 
-| Category | Test |
-|---|---|
-| Toolchain | Correct binary resolves per platform |
-| Toolchain | `bun --version` executes successfully |
-| `bun_install` | Clean install works |
-| `bun_install` | Stale lockfile fails with clear error |
-| `bun_install` | Output is deterministic |
-| `bun_binary` | JS entry point runs |
-| `bun_binary` | TS entry point runs without compile step |
-| `bun_binary` | Data files available at runtime |
-| `bun_test` | Passing tests → exit 0 |
-| `bun_test` | Failing tests → exit non-0 |
-| `bun_test` | Cache hit: unchanged test not re-run |
-| `bun_test` | Cache miss: changed source triggers re-run |
-| `bun_test` | JUnit XML output parseable |
-| `bun_bundle` | Output file produced |
-| `bun_bundle` | Minification reduces output size |
-| `bun_bundle` | Hermetic: identical inputs → identical digest |
-| `bun_bundle` | External packages excluded correctly |
-| Integration | `examples/basic` builds end-to-end with `bazel build //...` |
-| Integration | `bazel test //...` passes all tests |
+| Category      | Test                                                        |
+| ------------- | ----------------------------------------------------------- |
+| Toolchain     | Correct binary resolves per platform                        |
+| Toolchain     | `bun --version` executes successfully                       |
+| `bun_install` | Clean install works                                         |
+| `bun_install` | Stale lockfile fails with clear error                       |
+| `bun_install` | Output is deterministic                                     |
+| `bun_binary`  | JS entry point runs                                         |
+| `bun_binary`  | TS entry point runs without compile step                    |
+| `bun_binary`  | Data files available at runtime                             |
+| `bun_test`    | Passing tests → exit 0                                      |
+| `bun_test`    | Failing tests → exit non-0                                  |
+| `bun_test`    | Cache hit: unchanged test not re-run                        |
+| `bun_test`    | Cache miss: changed source triggers re-run                  |
+| `bun_test`    | JUnit XML output parseable                                  |
+| `bun_bundle`  | Output file produced                                        |
+| `bun_bundle`  | Minification reduces output size                            |
+| `bun_bundle`  | Hermetic: identical inputs → identical digest               |
+| `bun_bundle`  | External packages excluded correctly                        |
+| Integration   | `examples/basic` builds end-to-end with `bazel build //...` |
+| Integration   | `bazel test //...` passes all tests                         |
+
+### Gap-Closing Checklist (Concrete Targets)
+
+Use this checklist to close the current coverage gaps with explicit test targets.
+
+| Status  | Gap                                                        | Proposed target                    | Location                             |
+| ------- | ---------------------------------------------------------- | ---------------------------------- | ------------------------------------ |
+| Partial | Toolchain resolves per platform is only host-select tested | `toolchain_resolution_matrix_test` | `tests/toolchain_test/BUILD.bazel`   |
+| Missing | `bun_install` deterministic output digest                  | `bun_install_determinism_test`     | `tests/install_test/BUILD.bazel`     |
+| Missing | `bun_binary` runtime data files availability               | `bun_binary_data_test`             | `tests/binary_test/BUILD.bazel`      |
+| Partial | `bun_test` failing suite exists but is manual-only         | `bun_test_failing_suite_test`      | `tests/bun_test_test/BUILD.bazel`    |
+| Missing | `bun_test` cache hit (unchanged inputs)                    | `bun_test_cache_hit_test`          | `tests/bun_test_test/BUILD.bazel`    |
+| Missing | `bun_test` cache miss (changed source)                     | `bun_test_cache_miss_test`         | `tests/bun_test_test/BUILD.bazel`    |
+| Missing | `bun_test` JUnit XML parseability                          | `bun_test_junit_output_test`       | `tests/bun_test_test/BUILD.bazel`    |
+| Missing | `bun_bundle` hermetic digest stability                     | `bundle_hermetic_digest_test`      | `tests/bundle_test/BUILD.bazel`      |
+| Missing | `bun_bundle` external package exclusion                    | `bundle_external_exclusion_test`   | `tests/bundle_test/BUILD.bazel`      |
+| Missing | `examples/basic` end-to-end build via Bazel                | `examples_basic_e2e_build_test`    | `tests/integration_test/BUILD.bazel` |
+| Partial | CI currently runs `bazel test //tests/...` only            | `repo_all_targets_test`            | `tests/integration_test/BUILD.bazel` |
+
+Recommended implementation order:
+
+1. `bun_test_failing_suite_test` (remove/manual split) and `bun_binary_data_test`
+2. `bun_install_determinism_test`, `bundle_hermetic_digest_test`
+3. `bun_test_cache_hit_test`, `bun_test_cache_miss_test`, `bun_test_junit_output_test`
+4. `bundle_external_exclusion_test`, `examples_basic_e2e_build_test`, `repo_all_targets_test`
 
 ---
 
@@ -235,6 +272,7 @@ ts_library(
 **Day 1:** Copy the pattern from [`rules_go`](https://github.com/bazelbuild/rules_go) or [`aspect-build/rules_js`](https://github.com/aspect-build/rules_js) for toolchain registration. Write `repositories.bzl` that fetches the Bun binary for your current platform only. Write a `sh_test` that calls `bun --version` and asserts it exits 0. Get that green.
 
 **Reference implementations to study:**
+
 - `aspect-build/rules_js` — best modern reference for JS in Bazel
 - `bazelbuild/rules_nodejs` — older but battle-tested patterns
 - `bazelbuild/rules_python` — excellent toolchain download pattern to copy
