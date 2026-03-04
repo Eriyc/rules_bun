@@ -1,0 +1,41 @@
+load("//bun:defs.bzl", "bun_bundle", "bun_test", "ts_library")
+
+ts_library(
+    name = "helper_lib",
+    srcs = ["helper.ts"],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+)
+
+bun_bundle(
+    name = "bundle_with_deps",
+    entry_points = ["app.ts"],
+    deps = [":helper_lib"],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+)
+
+sh_test(
+    name = "bundle_dep_propagation_test",
+    srcs = ["verify_bundle.sh"],
+    args = ["$(location :bundle_with_deps)"],
+    data = [":bundle_with_deps"],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+)
+
+bun_test(
+    name = "test_with_deps",
+    srcs = ["app.test.ts"],
+    deps = [":helper_lib"],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+)

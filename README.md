@@ -34,3 +34,9 @@ Phase 5 bootstrap is in place:
 - Bundle rule `bun_bundle` (`/internal/bun_bundle.bzl`)
 - Public export via `bun/defs.bzl`
 - Focused output/minify tests (`//tests/bundle_test:all`)
+
+Phase 6 bootstrap is in place:
+
+- Source grouping rules `js_library` / `ts_library` (`/internal/js_library.bzl`)
+- Transitive `deps` propagation wired into `bun_bundle` and `bun_test`
+- Focused dependency-propagation tests (`//tests/library_test:all`)
