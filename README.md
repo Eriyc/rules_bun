@@ -22,3 +22,9 @@ Phase 3 bootstrap is in place:
 - Executable `bun_binary` rule (`/internal/bun_binary.bzl`)
 - Public export via `bun/defs.bzl`
 - Focused JS/TS runnable tests (`//tests/binary_test:all`)
+
+Phase 4 bootstrap is in place:
+
+- Test rule `bun_test` (`/internal/bun_test.bzl`)
+- Public export via `bun/defs.bzl`
+- Focused passing/failing test targets (`//tests/bun_test_test:all`)

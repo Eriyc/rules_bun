@@ -1,0 +1,19 @@
+load("//bun:defs.bzl", "bun_test")
+
+bun_test(
+    name = "passing_suite",
+    srcs = ["passing.test.ts"],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+)
+
+bun_test(
+    name = "failing_suite",
+    srcs = ["failing.test.ts"],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+)
