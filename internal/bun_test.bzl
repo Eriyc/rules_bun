@@ -1,11 +1,15 @@
 """Rule for running test suites with Bun."""
 
 
+def _shell_quote(value):
+    return "'" + value.replace("'", "'\"'\"'") + "'"
+
+
 def _bun_test_impl(ctx):
     toolchain = ctx.toolchains["//bun:toolchain_type"]
     bun_bin = toolchain.bun.bun_bin
 
-    src_args = " ".join(["\"{}\"".format(src.path) for src in ctx.files.srcs])
+    src_args = " ".join([_shell_quote(src.path) for src in ctx.files.srcs])
     launcher = ctx.actions.declare_file(ctx.label.name)
     ctx.actions.write(
         output = launcher,
@@ -20,9 +24,11 @@ fi
 if [[ -n "${{COVERAGE_DIR:-}}" ]]; then
   extra_args+=("--coverage")
 fi
-
-exec "{}" test {} "${{extra_args[@]}}" "$@"
-""".format(bun_bin.path, src_args),
+exec "{bun_bin}" test {src_args} "${{extra_args[@]}}" "$@"
+""".format(
+            bun_bin = bun_bin.path,
+            src_args = src_args,
+        ),
     )
 
     transitive_files = []

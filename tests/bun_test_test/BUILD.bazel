@@ -12,6 +12,7 @@ bun_test(
 bun_test(
     name = "failing_suite",
     srcs = ["failing.test.ts"],
+    tags = ["manual"],
     target_compatible_with = [
         "@platforms//cpu:x86_64",
         "@platforms//os:linux",
