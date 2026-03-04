@@ -1,1 +1,1 @@
-BUN_VERSION = "1.1.38"
+BUN_VERSION = "1.3.10"
