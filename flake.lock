@@ -1,5 +1,28 @@
 {
   "nodes": {
+    "devshell-lib": {
+      "inputs": {
+        "git-hooks": "git-hooks",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "treefmt-nix": "treefmt-nix"
+      },
+      "locked": {
+        "lastModified": 1772609129,
+        "narHash": "sha256-ha7H2OhxoLhkDVgKtgkJc8yO3f0rKlPZZTJYyc+rfLI=",
+        "ref": "v1.0.3",
+        "rev": "cdc9e180353b1a1105bbcdad18dc3938ea3e88a3",
+        "revCount": 31,
+        "type": "git",
+        "url": "https://git.dgren.dev/eric/nix-flake-lib"
+      },
+      "original": {
+        "ref": "v1.0.3",
+        "type": "git",
+        "url": "https://git.dgren.dev/eric/nix-flake-lib"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -39,6 +62,7 @@
     "gitignore": {
       "inputs": {
         "nixpkgs": [
+          "devshell-lib",
           "git-hooks",
           "nixpkgs"
         ]
@@ -75,22 +99,6 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1772542754,
-        "narHash": "sha256-WGV2hy+VIeQsYXpsLjdr4GvHv5eECMISX1zKLTedhdg=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "8c809a146a140c5c8806f13399592dbcb1bb5dc4",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_3": {
-      "locked": {
         "lastModified": 1770107345,
         "narHash": "sha256-tbS0Ebx2PiA1FRW8mt8oejR0qMXmziJmPaU1d4kYY9g=",
         "owner": "nixos",
@@ -105,16 +113,31 @@
         "type": "github"
       }
     },
+    "nixpkgs_3": {
+      "locked": {
+        "lastModified": 1772542754,
+        "narHash": "sha256-WGV2hy+VIeQsYXpsLjdr4GvHv5eECMISX1zKLTedhdg=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "8c809a146a140c5c8806f13399592dbcb1bb5dc4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
-        "git-hooks": "git-hooks",
-        "nixpkgs": "nixpkgs_2",
-        "treefmt-nix": "treefmt-nix"
+        "devshell-lib": "devshell-lib",
+        "nixpkgs": "nixpkgs_3"
       }
     },
     "treefmt-nix": {
       "inputs": {
-        "nixpkgs": "nixpkgs_3"
+        "nixpkgs": "nixpkgs_2"
       },
       "locked": {
         "lastModified": 1770228511,
