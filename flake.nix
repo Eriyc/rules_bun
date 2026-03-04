@@ -3,17 +3,16 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
-    git-hooks.url = "github:cachix/git-hooks.nix";
-    treefmt-nix.url = "github:numtide/treefmt-nix";
+    devshell-lib.url = "git+https://git.dgren.dev/eric/nix-flake-lib?ref=v1.0.3";
+    devshell-lib.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
     {
-      self,
       nixpkgs,
-      treefmt-nix,
+      devshell-lib,
       ...
-    }@inputs:
+    }:
     let
       supportedSystems = [
         "x86_64-linux"
@@ -22,147 +21,121 @@
         "aarch64-darwin"
       ];
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
-      treefmtEvalFor =
-        system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-        in
-        treefmt-nix.lib.evalModule pkgs {
-          projectRootFile = "flake.nix";
-
-          programs = {
-            nixfmt.enable = true;
-            shfmt.enable = true;
-            oxfmt.enable = true;
-          };
-
-          settings = {
-            formatter = {
-              shfmt = {
-                options = [
-                  "-i"
-                  "2"
-                  "-s"
-                  "-w"
-                ];
-              };
-              oxfmt = {
-                includes = [
-                  "*.md"
-                  "*.yaml"
-                  "*.yml"
-                  "*.json"
-                  "*.html"
-                  "*.css"
-                  "*.js"
-                  "*.ts"
-                  "*.tsx"
-                  "*.svelte"
-                ];
-              };
-            };
-          };
-        };
     in
     {
-      formatter = forAllSystems (system: (treefmtEvalFor system).config.build.wrapper);
-
-      checks = forAllSystems (
-        system:
-        let
-          pkgs = import nixpkgs { inherit system; };
-        in
-        {
-          pre-commit-check = inputs.git-hooks.lib.${system}.run {
-            src = ./.;
-            hooks = {
-              treefmt = {
-                enable = true;
-                entry = "${(treefmtEvalFor system).config.build.wrapper}/bin/treefmt";
-                pass_filenames = true;
-              };
-              gitlint.enable = true;
-
-              gitleaks = {
-                enable = true;
-                entry = "${pkgs.gitleaks}/bin/gitleaks protect --staged";
-                pass_filenames = false;
-              };
-
-              tests = {
-                enable = true;
-                entry = "echo 'No tests defined yet.'";
-                pass_filenames = false;
-                stages = [
-                  "pre-push"
-                ];
-              };
-            };
-          };
-        }
-      );
-
       devShells = forAllSystems (
         system:
         let
           pkgs = import nixpkgs { inherit system; };
-          inherit (self.checks.${system}.pre-commit-check) shellHook enabledPackages;
-          customShellHook = shellHook + "";
           bazel9 = pkgs.writeShellScriptBin "bazel" ''
             export USE_BAZEL_VERSION="''${USE_BAZEL_VERSION:-9.0.0}"
             exec ${pkgs.bazelisk}/bin/bazelisk "$@"
           '';
+          env = devshell-lib.lib.mkDevShell {
+            inherit system;
 
-        in
-        {
-          default = pkgs.mkShell {
-            packages = with pkgs; [
+            extraPackages = with pkgs; [
               go
               gopls
               gotools
-
               bun
-              gitlint
               bazel9
               bazel-buildtools
             ];
 
-            shellHook = ''
-                ${customShellHook}
-                export USE_BAZEL_VERSION="''${USE_BAZEL_VERSION:-9.0.0}"
-                export BUN_INSTALL="''${BUN_INSTALL:-$HOME/.bun}"
-                export PATH="$BUN_INSTALL/bin:$PATH"
+            features = {
+              oxfmt = true;
+            };
 
-                if ! command -v oxfmt >/dev/null 2>&1; then
-                  bun add --global oxfmt
-                fi
+            formatters = {
+              shfmt.enable = true;
+            };
 
-                if ! command -v oxlint >/dev/null 2>&1; then
-                  bun add --global oxlint
-                fi
+            formatterSettings = {
+              shfmt.options = [
+                "-i"
+                "2"
+                "-s"
+                "-w"
+              ];
+            };
 
-              if [ -t 1 ]; then
-                if command -v tput >/dev/null 2>&1; then
-                  tput clear
-                else
-                  printf '\033c'
-                fi
-              fi
+            additionalHooks = {
+              tests = {
+                enable = true;
+                entry = "echo 'No tests defined yet.'";
+                pass_filenames = false;
+                stages = [ "pre-push" ];
+              };
+            };
 
-              GREEN='\033[1;32m'
-              CYAN='\033[1;36m'
-              YELLOW='\033[1;33m'
-              BLUE='\033[1;34m'
-              RESET='\033[0m'
+            tools = [
+              {
+                name = "Bun";
+                bin = "${pkgs.bun}/bin/bun";
+                versionCmd = "--version";
+                color = "YELLOW";
+              }
+              {
+                name = "Go";
+                bin = "${pkgs.go}/bin/go";
+                versionCmd = "version";
+                color = "CYAN";
+              }
+              {
+                name = "Bazel";
+                bin = "${bazel9}/bin/bazel";
+                versionCmd = "--version";
+                color = "BLUE";
+              }
+            ];
 
-              printf "\n$GREEN 🚀 Monorepo dev shell ready$RESET\n\n"
-              printf "  $CYAN Bun:$RESET   $YELLOW%s$RESET\n" "$(bun --version)"
-              printf "  $CYAN Go:$RESET    $YELLOW%s$RESET\n" "$(go version)"
-              printf "  $CYAN Bazel:$RESET $BLUE%s$RESET\n\n" "$(bazel --version)"
+            extraShellHook = ''
+              export USE_BAZEL_VERSION="''${USE_BAZEL_VERSION:-9.0.0}"
+              export BUN_INSTALL="''${BUN_INSTALL:-$HOME/.bun}"
+              export PATH="$BUN_INSTALL/bin:$PATH"
             '';
-            buildInputs = enabledPackages;
           };
+        in
+        {
+          default = env.shell;
         }
       );
+
+      checks = forAllSystems (
+        system:
+        let
+          env = devshell-lib.lib.mkDevShell { inherit system; };
+        in
+        {
+          inherit (env) pre-commit-check;
+        }
+      );
+
+      formatter = forAllSystems (system: (devshell-lib.lib.mkDevShell { inherit system; }).formatter);
+
+      # Optional: release command (`release`)
+      #
+      # The release script always updates VERSION first, then:
+      #   1) runs release steps in order (file writes and scripts)
+      #   2) runs postVersion hook
+      #   3) formats, stages, commits, tags, and pushes
+      #
+      # Runtime env vars available in release.run/postVersion:
+      #   BASE_VERSION, CHANNEL, PRERELEASE_NUM, FULL_VERSION, FULL_TAG
+      #
+      packages = forAllSystems (system: {
+        release = devshell-lib.lib.mkRelease {
+          inherit system;
+
+          release = [ ];
+
+          postVersion = ''
+            echo "Released $FULL_TAG"
+          '';
+        };
+      });
+
     };
+
 }
