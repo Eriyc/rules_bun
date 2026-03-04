@@ -13,8 +13,15 @@ def _bun_binary_impl(ctx):
         content = """#!/usr/bin/env bash
 set -euo pipefail
 
-exec \"{}\" run \"{}\" \"$@\"
-""".format(bun_bin.path, entry_point.path),
+runfiles_dir="${{RUNFILES_DIR:-$0.runfiles}}"
+bun_bin="${{runfiles_dir}}/_main/{bun_short_path}"
+entry_point="${{runfiles_dir}}/_main/{entry_short_path}"
+
+exec "${{bun_bin}}" run "${{entry_point}}" "$@"
+""".format(
+            bun_short_path = bun_bin.short_path,
+            entry_short_path = entry_point.short_path,
+        ),
     )
 
     transitive_files = []
