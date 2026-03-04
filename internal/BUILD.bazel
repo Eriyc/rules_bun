@@ -1,10 +1,39 @@
+load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+
 package(default_visibility = ["//visibility:public"])
 
 exports_files([
-	"bun_binary.bzl",
-	"bun_bundle.bzl",
-	"bun_dev.bzl",
-	"bun_install.bzl",
-	"bun_test.bzl",
-	"js_library.bzl",
+    "bun_binary.bzl",
+    "bun_bundle.bzl",
+    "bun_dev.bzl",
+    "bun_install.bzl",
+    "bun_test.bzl",
+    "js_library.bzl",
 ])
+
+bzl_library(
+    name = "bun_binary_bzl",
+    srcs = ["bun_binary.bzl"],
+)
+
+bzl_library(
+    name = "bun_bundle_bzl",
+    srcs = ["bun_bundle.bzl"],
+    deps = [":js_library_bzl"],
+)
+
+bzl_library(
+    name = "bun_dev_bzl",
+    srcs = ["bun_dev.bzl"],
+)
+
+bzl_library(
+    name = "bun_test_bzl",
+    srcs = ["bun_test.bzl"],
+    deps = [":js_library_bzl"],
+)
+
+bzl_library(
+    name = "js_library_bzl",
+    srcs = ["js_library.bzl"],
+)

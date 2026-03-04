@@ -131,21 +131,37 @@ done
 
 bun_dev = rule(
     implementation = _bun_dev_impl,
+    doc = """Runs a JS/TS entry point in Bun development watch mode.
+
+This rule is intended for local dev loops (`bazel run`) and supports Bun
+watch/HMR plus optional full restarts on selected file changes.
+""",
     attrs = {
         "entry_point": attr.label(
             mandatory = True,
             allow_single_file = [".js", ".ts", ".jsx", ".tsx", ".mjs", ".cjs"],
+            doc = "Path to the main JS/TS file to execute in dev mode.",
         ),
         "watch_mode": attr.string(
             default = "watch",
             values = ["watch", "hot"],
+            doc = "Bun live-reload mode: `watch` (default) or `hot`.",
         ),
-        "restart_on": attr.label_list(allow_files = True),
-        "node_modules": attr.label(),
-        "data": attr.label_list(allow_files = True),
+        "restart_on": attr.label_list(
+            allow_files = True,
+            doc = "Files that trigger a full Bun process restart when they change.",
+        ),
+        "node_modules": attr.label(
+            doc = "Optional label providing Bun/npm package files in runfiles.",
+        ),
+        "data": attr.label_list(
+            allow_files = True,
+            doc = "Additional runtime files required by the dev process.",
+        ),
         "working_dir": attr.string(
             default = "workspace",
             values = ["workspace", "entry_point"],
+            doc = "Working directory at runtime: `workspace` root or `entry_point` directory.",
         ),
     },
     executable = True,

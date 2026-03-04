@@ -1,0 +1,18 @@
+load("@stardoc//stardoc:stardoc.bzl", "stardoc")
+
+package(default_visibility = ["//visibility:public"])
+
+stardoc(
+    name = "rules_md",
+    out = "rules.md",
+    input = "//bun:defs.bzl",
+    symbol_names = [
+        "bun_binary",
+        "bun_bundle",
+        "bun_dev",
+        "bun_test",
+        "js_library",
+        "ts_library",
+    ],
+    deps = ["//bun:defs_bzl"],
+)

@@ -61,25 +61,47 @@ def _bun_bundle_impl(ctx):
 
 bun_bundle = rule(
     implementation = _bun_bundle_impl,
+    doc = """Bundles one or more JS/TS entry points using Bun build.
+
+Each entry point produces one output JavaScript artifact.
+""",
     attrs = {
         "entry_points": attr.label_list(
             mandatory = True,
             allow_files = [".js", ".ts", ".jsx", ".tsx", ".mjs", ".cjs"],
+            doc = "Entry files to bundle.",
         ),
-        "node_modules": attr.label(),
-        "deps": attr.label_list(),
-        "data": attr.label_list(allow_files = True),
+        "node_modules": attr.label(
+            doc = "Optional label providing Bun/npm package files for resolution.",
+        ),
+        "deps": attr.label_list(
+            doc = "Source/library dependencies that provide transitive inputs.",
+        ),
+        "data": attr.label_list(
+            allow_files = True,
+            doc = "Additional non-source files needed during bundling.",
+        ),
         "target": attr.string(
             default = "browser",
             values = ["browser", "node", "bun"],
+            doc = "Bun build target environment.",
         ),
         "format": attr.string(
             default = "esm",
             values = ["esm", "cjs", "iife"],
+            doc = "Output module format.",
         ),
-        "minify": attr.bool(default = False),
-        "sourcemap": attr.bool(default = False),
-        "external": attr.string_list(),
+        "minify": attr.bool(
+            default = False,
+            doc = "If true, minifies bundle output.",
+        ),
+        "sourcemap": attr.bool(
+            default = False,
+            doc = "If true, emits source maps.",
+        ),
+        "external": attr.string_list(
+            doc = "Package names to treat as externals (not bundled).",
+        ),
     },
     toolchains = ["//bun:toolchain_type"],
 )

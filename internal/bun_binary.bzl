@@ -51,16 +51,27 @@ exec "${{bun_bin}}" --bun run "${{entry_point}}" "$@"
 
 bun_binary = rule(
     implementation = _bun_binary_impl,
+    doc = """Runs a JS/TS entry point with Bun as an executable target.
+
+Use this rule for non-test scripts and CLIs that should run via `bazel run`.
+""",
     attrs = {
         "entry_point": attr.label(
             mandatory = True,
             allow_single_file = [".js", ".ts", ".jsx", ".tsx", ".mjs", ".cjs"],
+            doc = "Path to the main JS/TS file to execute.",
         ),
-        "node_modules": attr.label(),
-        "data": attr.label_list(allow_files = True),
+        "node_modules": attr.label(
+            doc = "Optional label providing Bun/npm package files in runfiles.",
+        ),
+        "data": attr.label_list(
+            allow_files = True,
+            doc = "Additional runtime files required by the program.",
+        ),
         "working_dir": attr.string(
             default = "workspace",
             values = ["workspace", "entry_point"],
+            doc = "Working directory at runtime: `workspace` root or `entry_point` directory.",
         ),
     },
     executable = True,
