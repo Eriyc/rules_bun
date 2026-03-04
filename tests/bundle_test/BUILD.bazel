@@ -1,4 +1,5 @@
 load("//bun:defs.bzl", "bun_bundle")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 bun_bundle(
     name = "simple_bundle",

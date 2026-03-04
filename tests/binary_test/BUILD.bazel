@@ -1,8 +1,13 @@
 load("//bun:defs.bzl", "bun_binary")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 bun_binary(
     name = "hello_js_bin",
     entry_point = "hello.js",
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
 )
 
 sh_test(
@@ -19,6 +24,10 @@ sh_test(
 bun_binary(
     name = "hello_ts_bin",
     entry_point = "hello.ts",
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
 )
 
 sh_test(

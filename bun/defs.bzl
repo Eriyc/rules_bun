@@ -1,17 +1,12 @@
-load("//internal:bun_binary.bzl", "bun_binary")
-load("//internal:bun_bundle.bzl", "bun_bundle")
-load("//internal:bun_install.bzl", "bun_install")
-load("//internal:bun_test.bzl", "bun_test")
-load(":repositories.bzl", "bun_register_toolchains", "bun_repositories")
-load(":toolchain.bzl", "BunToolchainInfo", "bun_toolchain")
+load("//internal:bun_binary.bzl", _bun_binary = "bun_binary")
+load("//internal:bun_bundle.bzl", _bun_bundle = "bun_bundle")
+load("//internal:bun_test.bzl", _bun_test = "bun_test")
+load(":toolchain.bzl", _BunToolchainInfo = "BunToolchainInfo", _bun_toolchain = "bun_toolchain")
 
-__all__ = [
-    "BunToolchainInfo",
-    "bun_binary",
-    "bun_bundle",
-    "bun_install",
-    "bun_test",
-    "bun_register_toolchains",
-    "bun_repositories",
-    "bun_toolchain",
-]
+visibility("public")
+
+bun_binary = _bun_binary
+bun_bundle = _bun_bundle
+bun_test = _bun_test
+BunToolchainInfo = _BunToolchainInfo
+bun_toolchain = _bun_toolchain
