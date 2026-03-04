@@ -1,0 +1,59 @@
+load("//bun:defs.bzl", "bun_bundle")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+bun_bundle(
+    name = "simple_bundle",
+    entry_points = ["main.ts"],
+)
+
+bun_bundle(
+    name = "minified_bundle",
+    entry_points = ["main.ts"],
+    minify = True,
+)
+
+bun_bundle(
+    name = "external_bundle",
+    entry_points = ["main.ts"],
+    external = ["left-pad"],
+)
+
+sh_test(
+    name = "bundle_output_test",
+    srcs = ["verify_bundle.sh"],
+    args = ["$(location :simple_bundle)"],
+    data = [":simple_bundle"],
+)
+
+sh_test(
+    name = "bundle_minify_test",
+    srcs = ["verify_minify.sh"],
+    args = [
+        "$(location :simple_bundle)",
+        "$(location :minified_bundle)",
+    ],
+    data = [
+        ":simple_bundle",
+        ":minified_bundle",
+    ],
+)
+
+sh_test(
+    name = "bundle_hermetic_digest_test",
+    srcs = ["verify_hermetic_shape.sh"],
+    args = ["$(location //internal:bun_bundle.bzl)"],
+    data = ["//internal:bun_bundle.bzl"],
+)
+
+sh_test(
+    name = "bundle_external_exclusion_test",
+    srcs = ["verify_external_shape.sh"],
+    args = [
+        "$(location //internal:bun_bundle.bzl)",
+        "$(location //tests/bundle_test:BUILD.bazel)",
+    ],
+    data = [
+        "//internal:bun_bundle.bzl",
+        "//tests/bundle_test:BUILD.bazel",
+    ],
+)

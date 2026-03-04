@@ -1,0 +1,141 @@
+{
+  description = "rules_bun development flake";
+
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+    devshell-lib.url = "git+https://git.dgren.dev/eric/nix-flake-lib?ref=v1.0.4";
+    devshell-lib.inputs.nixpkgs.follows = "nixpkgs";
+  };
+
+  outputs =
+    {
+      nixpkgs,
+      devshell-lib,
+      ...
+    }:
+    let
+      supportedSystems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
+      ];
+      forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
+    in
+    {
+      devShells = forAllSystems (
+        system:
+        let
+          pkgs = import nixpkgs { inherit system; };
+          bazel9 = pkgs.writeShellScriptBin "bazel" ''
+            export USE_BAZEL_VERSION="''${USE_BAZEL_VERSION:-9.0.0}"
+            exec ${pkgs.bazelisk}/bin/bazelisk "$@"
+          '';
+          env = devshell-lib.lib.mkDevShell {
+            inherit system;
+
+            extraPackages = with pkgs; [
+              go
+              gopls
+              gotools
+              bun
+              bazel9
+              bazel-buildtools
+            ];
+
+            features = {
+              oxfmt = true;
+            };
+
+            formatters = {
+              shfmt.enable = true;
+            };
+
+            formatterSettings = {
+              shfmt.options = [
+                "-i"
+                "2"
+                "-s"
+                "-w"
+              ];
+            };
+
+            additionalHooks = {
+              tests = {
+                enable = true;
+                entry = "echo 'No tests defined yet.'";
+                pass_filenames = false;
+                stages = [ "pre-push" ];
+              };
+            };
+
+            tools = [
+              {
+                name = "Bun";
+                bin = "${pkgs.bun}/bin/bun";
+                versionCmd = "--version";
+                color = "YELLOW";
+              }
+              {
+                name = "Go";
+                bin = "${pkgs.go}/bin/go";
+                versionCmd = "version";
+                color = "CYAN";
+              }
+              {
+                name = "Bazel";
+                bin = "${bazel9}/bin/bazel";
+                versionCmd = "--version";
+                color = "BLUE";
+              }
+            ];
+
+            extraShellHook = ''
+              export USE_BAZEL_VERSION="''${USE_BAZEL_VERSION:-9.0.0}"
+              export BUN_INSTALL="''${BUN_INSTALL:-$HOME/.bun}"
+              export PATH="$BUN_INSTALL/bin:$PATH"
+            '';
+          };
+        in
+        {
+          default = env.shell;
+        }
+      );
+
+      checks = forAllSystems (
+        system:
+        let
+          env = devshell-lib.lib.mkDevShell { inherit system; };
+        in
+        {
+          inherit (env) pre-commit-check;
+        }
+      );
+
+      formatter = forAllSystems (system: (devshell-lib.lib.mkDevShell { inherit system; }).formatter);
+
+      # Optional: release command (`release`)
+      #
+      # The release script always updates VERSION first, then:
+      #   1) runs release steps in order (file writes and scripts)
+      #   2) runs postVersion hook
+      #   3) formats, stages, commits, tags, and pushes
+      #
+      # Runtime env vars available in release.run/postVersion:
+      #   BASE_VERSION, CHANNEL, PRERELEASE_NUM, FULL_VERSION, FULL_TAG
+      #
+      packages = forAllSystems (system: {
+        release = devshell-lib.lib.mkRelease {
+          inherit system;
+
+          release = [ ];
+
+          postVersion = ''
+            echo "Released $FULL_TAG"
+          '';
+        };
+      });
+
+    };
+
+}

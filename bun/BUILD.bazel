@@ -1,0 +1,109 @@
+load(":toolchain.bzl", "bun_toolchain")
+load(":version.bzl", "BUN_VERSION")
+
+exports_files([
+    "defs.bzl",
+    "extensions.bzl",
+])
+
+toolchain_type(name = "toolchain_type")
+
+bun_toolchain(
+    name = "linux_x64_toolchain_impl",
+    bun = "@bun_linux_x64//:bun",
+    version = BUN_VERSION,
+)
+
+bun_toolchain(
+    name = "linux_aarch64_toolchain_impl",
+    bun = "@bun_linux_aarch64//:bun",
+    version = BUN_VERSION,
+)
+
+bun_toolchain(
+    name = "darwin_x64_toolchain_impl",
+    bun = "@bun_darwin_x64//:bun",
+    version = BUN_VERSION,
+)
+
+bun_toolchain(
+    name = "darwin_aarch64_toolchain_impl",
+    bun = "@bun_darwin_aarch64//:bun",
+    version = BUN_VERSION,
+)
+
+bun_toolchain(
+    name = "windows_x64_toolchain_impl",
+    bun = "@bun_windows_x64//:bun",
+    version = BUN_VERSION,
+)
+
+toolchain(
+    name = "linux_x64_toolchain",
+    exec_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    toolchain = ":linux_x64_toolchain_impl",
+    toolchain_type = ":toolchain_type",
+)
+
+toolchain(
+    name = "linux_aarch64_toolchain",
+    exec_compatible_with = [
+        "@platforms//cpu:arm64",
+        "@platforms//os:linux",
+    ],
+    target_compatible_with = [
+        "@platforms//cpu:arm64",
+        "@platforms//os:linux",
+    ],
+    toolchain = ":linux_aarch64_toolchain_impl",
+    toolchain_type = ":toolchain_type",
+)
+
+toolchain(
+    name = "darwin_x64_toolchain",
+    exec_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:macos",
+    ],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:macos",
+    ],
+    toolchain = ":darwin_x64_toolchain_impl",
+    toolchain_type = ":toolchain_type",
+)
+
+toolchain(
+    name = "darwin_aarch64_toolchain",
+    exec_compatible_with = [
+        "@platforms//cpu:arm64",
+        "@platforms//os:macos",
+    ],
+    target_compatible_with = [
+        "@platforms//cpu:arm64",
+        "@platforms//os:macos",
+    ],
+    toolchain = ":darwin_aarch64_toolchain_impl",
+    toolchain_type = ":toolchain_type",
+)
+
+toolchain(
+    name = "windows_x64_toolchain",
+    exec_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:windows",
+    ],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:windows",
+    ],
+    toolchain = ":windows_x64_toolchain_impl",
+    toolchain_type = ":toolchain_type",
+)

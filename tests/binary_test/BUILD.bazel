@@ -1,0 +1,45 @@
+load("//bun:defs.bzl", "bun_binary")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+bun_binary(
+    name = "hello_js_bin",
+    entry_point = "hello.js",
+)
+
+sh_test(
+    name = "bun_binary_js_test",
+    srcs = ["run_binary.sh"],
+    args = ["$(location :hello_js_bin)", "hello-js"],
+    data = [":hello_js_bin"],
+)
+
+bun_binary(
+    name = "hello_ts_bin",
+    entry_point = "hello.ts",
+)
+
+sh_test(
+    name = "bun_binary_ts_test",
+    srcs = ["run_binary.sh"],
+    args = ["$(location :hello_ts_bin)", "hello-ts"],
+    data = [":hello_ts_bin"],
+)
+
+bun_binary(
+    name = "hello_js_with_data_bin",
+    entry_point = "hello.js",
+    data = ["payload.txt"],
+)
+
+sh_test(
+    name = "bun_binary_data_test",
+    srcs = ["verify_data_shape.sh"],
+    args = [
+        "$(location //internal:bun_binary.bzl)",
+        "$(location //tests/binary_test:BUILD.bazel)",
+    ],
+    data = [
+        "//internal:bun_binary.bzl",
+        "//tests/binary_test:BUILD.bazel",
+    ],
+)

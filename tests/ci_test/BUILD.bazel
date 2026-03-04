@@ -1,0 +1,8 @@
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+sh_test(
+    name = "phase8_ci_matrix_shape_test",
+    srcs = ["phase8_ci_matrix_shape_test.sh"],
+    args = ["$(location //.github/workflows:ci.yml)"],
+    data = ["//.github/workflows:ci.yml"],
+)
