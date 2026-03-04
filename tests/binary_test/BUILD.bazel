@@ -1,0 +1,35 @@
+load("//bun:defs.bzl", "bun_binary")
+
+bun_binary(
+    name = "hello_js_bin",
+    entry_point = "hello.js",
+    data = ["hello.js"],
+)
+
+sh_test(
+    name = "bun_binary_js_test",
+    srcs = ["run_binary.sh"],
+    args = ["$(location :hello_js_bin)", "hello-js"],
+    data = [":hello_js_bin"],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+)
+
+bun_binary(
+    name = "hello_ts_bin",
+    entry_point = "hello.ts",
+    data = ["hello.ts"],
+)
+
+sh_test(
+    name = "bun_binary_ts_test",
+    srcs = ["run_binary.sh"],
+    args = ["$(location :hello_ts_bin)", "hello-ts"],
+    data = [":hello_ts_bin"],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+)
