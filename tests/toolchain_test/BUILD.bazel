@@ -1,0 +1,10 @@
+sh_test(
+    name = "bun_version_test",
+    srcs = ["toolchain_version.sh"],
+    args = ["$(location @bun_linux_x64//:bun)"],
+    data = ["@bun_linux_x64//:bun"],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+)
