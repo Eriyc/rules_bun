@@ -1,0 +1,48 @@
+load("//bun:defs.bzl", "bun_bundle")
+
+bun_bundle(
+    name = "simple_bundle",
+    entry_points = ["main.ts"],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+)
+
+bun_bundle(
+    name = "minified_bundle",
+    entry_points = ["main.ts"],
+    minify = True,
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+)
+
+sh_test(
+    name = "bundle_output_test",
+    srcs = ["verify_bundle.sh"],
+    args = ["$(location :simple_bundle)"],
+    data = [":simple_bundle"],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+)
+
+sh_test(
+    name = "bundle_minify_test",
+    srcs = ["verify_minify.sh"],
+    args = [
+        "$(location :simple_bundle)",
+        "$(location :minified_bundle)",
+    ],
+    data = [
+        ":simple_bundle",
+        ":minified_bundle",
+    ],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+)
