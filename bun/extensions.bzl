@@ -1,4 +1,5 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("//internal:bun_install.bzl", _bun_install_repository = "_bun_install_repository")
 load(":version.bzl", "BUN_VERSION")
 
 _BUN_ARCHIVES = {
@@ -52,4 +53,28 @@ filegroup(
 
 bun = module_extension(
     implementation = _bun_repos_impl,
+)
+
+_install = tag_class(
+    attrs = {
+        "name": attr.string(default = "node_modules"),
+        "package_json": attr.string(mandatory = True),
+        "bun_lockfile": attr.string(mandatory = True),
+    },
+)
+
+
+def _bun_install_impl(ctx):
+    for mod in ctx.modules:
+        for install in mod.tags.install:
+            _bun_install_repository(
+                name = install.name,
+                package_json = install.package_json,
+                bun_lockfile = install.bun_lockfile,
+            )
+
+
+bun_install = module_extension(
+    implementation = _bun_install_impl,
+    tag_classes = {"install": _install},
 )

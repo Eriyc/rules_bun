@@ -1,0 +1,8 @@
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+sh_test(
+    name = "bun_install_extension_shape_test",
+    srcs = ["extension_shape_test.sh"],
+    args = ["$(location //bun:extensions.bzl)"],
+    data = ["//bun:extensions.bzl"],
+)
