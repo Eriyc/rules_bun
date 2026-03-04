@@ -12,6 +12,12 @@ bun_bundle(
     minify = True,
 )
 
+bun_bundle(
+    name = "external_bundle",
+    entry_points = ["main.ts"],
+    external = ["left-pad"],
+)
+
 sh_test(
     name = "bundle_output_test",
     srcs = ["verify_bundle.sh"],
@@ -29,5 +35,25 @@ sh_test(
     data = [
         ":simple_bundle",
         ":minified_bundle",
+    ],
+)
+
+sh_test(
+    name = "bundle_hermetic_digest_test",
+    srcs = ["verify_hermetic_shape.sh"],
+    args = ["$(location //internal:bun_bundle.bzl)"],
+    data = ["//internal:bun_bundle.bzl"],
+)
+
+sh_test(
+    name = "bundle_external_exclusion_test",
+    srcs = ["verify_external_shape.sh"],
+    args = [
+        "$(location //internal:bun_bundle.bzl)",
+        "$(location //tests/bundle_test:BUILD.bazel)",
+    ],
+    data = [
+        "//internal:bun_bundle.bzl",
+        "//tests/bundle_test:BUILD.bazel",
     ],
 )

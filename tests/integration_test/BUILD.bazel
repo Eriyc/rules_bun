@@ -1,0 +1,21 @@
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+sh_test(
+    name = "examples_basic_e2e_build_test",
+    srcs = ["examples_basic_e2e_build_test.sh"],
+    args = [
+        "$(location //examples/basic:BUILD.bazel)",
+        "$(location //examples/basic:README.md)",
+    ],
+    data = [
+        "//examples/basic:BUILD.bazel",
+        "//examples/basic:README.md",
+    ],
+)
+
+sh_test(
+    name = "repo_all_targets_test",
+    srcs = ["repo_all_targets_test.sh"],
+    args = ["$(location //.github/workflows:ci.yml)"],
+    data = ["//.github/workflows:ci.yml"],
+)
