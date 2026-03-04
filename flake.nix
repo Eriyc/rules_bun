@@ -130,7 +130,13 @@
         release = devshell-lib.lib.mkRelease {
           inherit system;
 
-          release = [ ];
+          release = [
+            {
+              run = ''
+                sed -E -i 's#^([[:space:]]*version[[:space:]]*=[[:space:]]*")[^"]*(",)$#\1'"$FULL_VERSION"'\2#' "$ROOT_DIR/MODULE.bazel"
+              '';
+            }
+          ];
 
           postVersion = ''
             echo "Released $FULL_TAG"
