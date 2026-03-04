@@ -40,3 +40,8 @@ Phase 6 bootstrap is in place:
 - Source grouping rules `js_library` / `ts_library` (`/internal/js_library.bzl`)
 - Transitive `deps` propagation wired into `bun_bundle` and `bun_test`
 - Focused dependency-propagation tests (`//tests/library_test:all`)
+
+Phase 7 bootstrap is in place:
+
+- Bzlmod `bun_install` module extension (`/bun/extensions.bzl`) using Bazel 9-compatible extension/tag syntax
+- Focused module-extension shape test (`//tests/install_extension_test:all`)
