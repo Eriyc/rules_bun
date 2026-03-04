@@ -1,5 +1,13 @@
+load("//bun:defs.bzl", "bun_dev")
+
 package(default_visibility = ["//visibility:public"])
 
 exports_files([
 	"README.md",
+	"main.ts",
 ])
+
+bun_dev(
+    name = "web_dev",
+    entry_point = "main.ts",
+)
