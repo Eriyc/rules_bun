@@ -2,52 +2,102 @@
 
 Bazel rules for bun.
 
-## Current status
+## Use
 
-Phase 1 bootstrap is in place:
+These steps show how to consume a tagged release of `rules_bun` in a separate Bazel workspace.
 
-- Bun toolchain rule and provider (`/bun/toolchain.bzl`)
-- Platform-specific Bun repository downloads (`/bun/repositories.bzl`)
-- Toolchain declarations and registration targets (`/bun/BUILD.bazel`)
-- Smoke test for `bun --version` (`//tests/toolchain_test:bun_version_test`)
+### 1) Add the module dependency
 
-Phase 2 bootstrap is in place:
+In your project's `MODULE.bazel`, add:
 
-- Repository-rule based `bun_install` (`/internal/bun_install.bzl`)
-- Public export via `bun/defs.bzl`
-- Focused install behavior tests (`//tests/install_test:all`)
+```starlark
+bazel_dep(name = "rules_bun", version = "0.0.3")
 
-Phase 3 bootstrap is in place:
+archive_override(
+	module_name = "rules_bun",
+	urls = ["https://github.com/Eriyc/rules_bun/archive/refs/tags/v0.0.3.tar.gz"],
+	strip_prefix = "rules_bun-v0.0.3",
+)
+```
 
-- Executable `bun_binary` rule (`/internal/bun_binary.bzl`)
-- Public export via `bun/defs.bzl`
-- Focused JS/TS runnable tests (`//tests/binary_test:all`)
+For channel/pre-release tags (for example `v0.0.3-rc.1`), use the matching folder prefix:
 
-Phase 4 bootstrap is in place:
+```starlark
+bazel_dep(name = "rules_bun", version = "0.0.3-rc.1")
 
-- Test rule `bun_test` (`/internal/bun_test.bzl`)
-- Public export via `bun/defs.bzl`
-- Focused passing/failing test targets (`//tests/bun_test_test:all`)
+archive_override(
+	module_name = "rules_bun",
+	urls = ["https://github.com/Eriyc/rules_bun/archive/refs/tags/v0.0.3-rc.1.tar.gz"],
+	strip_prefix = "rules_bun-v0.0.3-rc.1",
+)
+```
 
-Phase 5 bootstrap is in place:
+Note: keep the `v` prefix in the Git tag URL and `strip_prefix`; for `bazel_dep(..., version = ...)`, use the module version string without the leading `v`.
 
-- Bundle rule `bun_bundle` (`/internal/bun_bundle.bzl`)
-- Public export via `bun/defs.bzl`
-- Focused output/minify tests (`//tests/bundle_test:all`)
+### 2) Create Bun repositories with the extension
 
-Phase 6 bootstrap is in place:
+Still in `MODULE.bazel`, add:
 
-- Source grouping rules `js_library` / `ts_library` (`/internal/js_library.bzl`)
-- Transitive `deps` propagation wired into `bun_bundle` and `bun_test`
-- Focused dependency-propagation tests (`//tests/library_test:all`)
+```starlark
+bun_ext = use_extension("@rules_bun//bun:extensions.bzl", "bun")
 
-Phase 7 bootstrap is in place:
+use_repo(
+	bun_ext,
+	"bun_linux_x64",
+	"bun_linux_aarch64",
+	"bun_darwin_x64",
+	"bun_darwin_aarch64",
+	"bun_windows_x64",
+)
+```
 
-- Bzlmod `bun_install` module extension (`/bun/extensions.bzl`) using Bazel 9-compatible extension/tag syntax
-- Focused module-extension shape test (`//tests/install_extension_test:all`)
+### 3) Register toolchains
 
-Phase 8 bootstrap is in place:
+Also in `MODULE.bazel`, register:
 
-- CI matrix workflow for linux-x64, darwin-arm64, and windows (`/.github/workflows/ci.yml`)
-- Bazel 9 pin in CI via `USE_BAZEL_VERSION=9.0.0`
-- Focused CI matrix shape test (`//tests/ci_test:all`)
+```starlark
+register_toolchains(
+	"@rules_bun//bun:darwin_aarch64_toolchain",
+	"@rules_bun//bun:darwin_x64_toolchain",
+	"@rules_bun//bun:linux_aarch64_toolchain",
+	"@rules_bun//bun:linux_x64_toolchain",
+	"@rules_bun//bun:windows_x64_toolchain",
+)
+```
+
+### 4) Load rules in `BUILD.bazel`
+
+```starlark
+load(
+	"@rules_bun//bun:defs.bzl",
+	"bun_binary",
+	"bun_bundle",
+	"bun_test",
+	"js_library",
+	"ts_library",
+)
+```
+
+### 5) (Optional) Use `bun_install` module extension
+
+If you want Bazel-managed install repositories, add:
+
+```starlark
+bun_install_ext = use_extension("@rules_bun//bun:extensions.bzl", "bun_install")
+
+bun_install_ext.install(
+	name = "npm",
+	package_json = "//:package.json",
+	bun_lockfile = "//:bun.lock",
+)
+
+use_repo(bun_install_ext, "npm")
+```
+
+### 6) Verify setup
+
+Run one of your bun-backed targets, for example:
+
+```bash
+bazel test //path/to:your_bun_test
+```
