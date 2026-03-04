@@ -57,7 +57,7 @@ bun = module_extension(
 
 _install = tag_class(
     attrs = {
-        "name": attr.string(default = "node_modules"),
+        "name": attr.string(mandatory = True),
         "package_json": attr.string(mandatory = True),
         "bun_lockfile": attr.string(mandatory = True),
     },
