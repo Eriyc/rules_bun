@@ -16,3 +16,9 @@ Phase 2 bootstrap is in place:
 - Repository-rule based `bun_install` (`/internal/bun_install.bzl`)
 - Public export via `bun/defs.bzl`
 - Focused install behavior tests (`//tests/install_test:all`)
+
+Phase 3 bootstrap is in place:
+
+- Executable `bun_binary` rule (`/internal/bun_binary.bzl`)
+- Public export via `bun/defs.bzl`
+- Focused JS/TS runnable tests (`//tests/binary_test:all`)
