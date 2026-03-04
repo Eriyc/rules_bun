@@ -103,6 +103,8 @@ Run one of your bun-backed targets, for example:
 bazel test //path/to:your_bun_test
 ```
 
+All `rules_bun` rule-driven Bun invocations pass `--bun`.
+
 ## Development mode (`bun_dev`)
 
 Use `bun_dev` for long-running local development with Bun watch mode.
@@ -113,6 +115,8 @@ load("@rules_bun//bun:defs.bzl", "bun_dev")
 bun_dev(
 	name = "web_dev",
 	entry_point = "src/main.ts",
+	# Optional: run from the entry point directory so Bun auto-loads colocated .env files.
+	# working_dir = "entry_point",
 )
 ```
 
@@ -127,6 +131,16 @@ bazel run //path/to:web_dev
 - `watch_mode = "watch"` (default) for `bun --watch`
 - `watch_mode = "hot"` for `bun --hot`
 - `restart_on = [...]` to force full process restarts when specific files change
+- `working_dir = "workspace" | "entry_point"` (default: `workspace`)
+
+## Runtime working directory (`bun_binary`, `bun_dev`)
+
+`bun_binary` and `bun_dev` support `working_dir`:
+
+- `"workspace"` (default): runs from the Bazel runfiles workspace root.
+- `"entry_point"`: runs from the entry point file's directory.
+
+Use `"entry_point"` when Bun should resolve local files such as colocated `.env` files relative to the program directory.
 
 ### Hybrid Go + Bun + protobuf workflow
 

@@ -43,3 +43,17 @@ sh_test(
         "//tests/binary_test:BUILD.bazel",
     ],
 )
+
+bun_binary(
+    name = "env_cwd_bin",
+    entry_point = "env.ts",
+    data = [".env"],
+    working_dir = "entry_point",
+)
+
+sh_test(
+    name = "bun_binary_env_cwd_test",
+    srcs = ["run_env_binary.sh"],
+    args = ["$(location :env_cwd_bin)"],
+    data = [":env_cwd_bin"],
+)

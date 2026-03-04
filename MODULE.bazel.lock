@@ -189,8 +189,8 @@
   "moduleExtensions": {
     "//bun:extensions.bzl%bun": {
       "general": {
-        "bzlTransitiveDigest": "Q0uQOwFAgAU+etePCZ4TUDO+adLX7Z0EmRLaEsKgncw=",
-        "usagesDigest": "UC4zk8kEwWRiDG5FVQOCFysXcrZ757Jehf3sZgG893w=",
+        "bzlTransitiveDigest": "oLR98WtKDCc+zh7Tvu9jtakNg8q/T1IPE38QR1FEQtI=",
+        "usagesDigest": "9s+/cJR+wTifjBrio71E10Knd41B08/GmW4I9zJmU64=",
         "recordedInputs": [
           "REPO_MAPPING:,bazel_tools bazel_tools"
         ],

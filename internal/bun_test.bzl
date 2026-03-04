@@ -24,15 +24,15 @@ bun_bin="${{runfiles_dir}}/_main/{bun_short_path}"
 cd "${{runfiles_dir}}/_main"
 
 if [[ -n "${{TESTBRIDGE_TEST_ONLY:-}}" && -n "${{COVERAGE_DIR:-}}" ]]; then
-    exec "${{bun_bin}}" test {src_args} --test-name-pattern "${{TESTBRIDGE_TEST_ONLY}}" --coverage "$@"
+    exec "${{bun_bin}}" --bun test {src_args} --test-name-pattern "${{TESTBRIDGE_TEST_ONLY}}" --coverage "$@"
 fi
 if [[ -n "${{TESTBRIDGE_TEST_ONLY:-}}" ]]; then
-    exec "${{bun_bin}}" test {src_args} --test-name-pattern "${{TESTBRIDGE_TEST_ONLY}}" "$@"
+    exec "${{bun_bin}}" --bun test {src_args} --test-name-pattern "${{TESTBRIDGE_TEST_ONLY}}" "$@"
 fi
 if [[ -n "${{COVERAGE_DIR:-}}" ]]; then
-    exec "${{bun_bin}}" test {src_args} --coverage "$@"
+    exec "${{bun_bin}}" --bun test {src_args} --coverage "$@"
 fi
-exec "${{bun_bin}}" test {src_args} "$@"
+exec "${{bun_bin}}" --bun test {src_args} "$@"
 """.format(
                         bun_short_path = bun_bin.short_path,
             src_args = src_args,

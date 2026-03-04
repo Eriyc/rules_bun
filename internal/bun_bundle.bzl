@@ -27,6 +27,7 @@ def _bun_bundle_impl(ctx):
         outputs.append(output)
 
         args = ctx.actions.args()
+        args.add("--bun")
         args.add("build")
         args.add(entry.path)
         args.add("--outfile")

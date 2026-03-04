@@ -36,14 +36,14 @@ def _bun_install_repository_impl(repository_ctx):
     repository_ctx.symlink(bun_lockfile, "bun.lockb")
 
     result = repository_ctx.execute(
-        [str(bun_bin), "install", "--frozen-lockfile", "--no-progress"],
+        [str(bun_bin), "--bun", "install", "--frozen-lockfile", "--no-progress"],
         timeout = 600,
         quiet = False,
         environment = {"HOME": str(repository_ctx.path("."))},
     )
 
     if result.return_code:
-        fail("""bun_install failed running `bun install --frozen-lockfile`.
+        fail("""bun_install failed running `bun --bun install --frozen-lockfile`.
 stdout:
 {}
 stderr:

@@ -1,6 +1,5 @@
 """Rule for running JS/TS scripts with Bun in watch mode for development."""
 
-
 def _bun_dev_impl(ctx):
     toolchain = ctx.toolchains["//bun:toolchain_type"]
     bun_bin = toolchain.bun.bun_bin
@@ -18,7 +17,13 @@ set -euo pipefail
 runfiles_dir="${{RUNFILES_DIR:-$0.runfiles}}"
 bun_bin="${{runfiles_dir}}/_main/{bun_short_path}"
 entry_point="${{runfiles_dir}}/_main/{entry_short_path}"
-cd "${{runfiles_dir}}/_main"
+
+working_dir="{working_dir}"
+if [[ "${{working_dir}}" == "entry_point" ]]; then
+    cd "$(dirname "${{entry_point}}")"
+else
+    cd "${{runfiles_dir}}/_main"
+fi
 
 watch_mode="{watch_mode}"
 if [[ "${{watch_mode}}" == "hot" ]]; then
@@ -28,7 +33,7 @@ else
 fi
 
 run_dev() {{
-    exec "${{bun_bin}}" "${{dev_flag}}" run "${{entry_point}}" "$@"
+    exec "${{bun_bin}}" --bun "${{dev_flag}}" run "${{entry_point}}" "$@"
 }}
 
 if [[ {restart_count} -eq 0 ]]; then
@@ -50,8 +55,9 @@ file_mtime() {{
 
 declare -A mtimes
 for rel in "${{restart_paths[@]}}"; do
-    if [[ -e "${{rel}}" ]]; then
-        mtimes["${{rel}}"]="$(file_mtime "${{rel}}")"
+    path="${{runfiles_dir}}/_main/${{rel}}"
+    if [[ -e "${{path}}" ]]; then
+        mtimes["${{rel}}"]="$(file_mtime "${{path}}")"
     else
         mtimes["${{rel}}"]="missing"
     fi
@@ -63,7 +69,7 @@ restart_child() {{
         kill "${{child_pid}}"
         wait "${{child_pid}}" || true
     fi
-    "${{bun_bin}}" "${{dev_flag}}" run "${{entry_point}}" "$@" &
+    "${{bun_bin}}" --bun "${{dev_flag}}" run "${{entry_point}}" "$@" &
     child_pid=$!
 }}
 
@@ -82,8 +88,9 @@ while true; do
     sleep 1
     changed=0
     for rel in "${{restart_paths[@]}}"; do
-        if [[ -e "${{rel}}" ]]; then
-            current="$(file_mtime "${{rel}}")"
+        path="${{runfiles_dir}}/_main/${{rel}}"
+        if [[ -e "${{path}}" ]]; then
+            current="$(file_mtime "${{path}}")"
         else
             current="missing"
         fi
@@ -100,6 +107,7 @@ done
             bun_short_path = bun_bin.short_path,
             entry_short_path = entry_point.short_path,
             watch_mode = ctx.attr.watch_mode,
+            working_dir = ctx.attr.working_dir,
             restart_count = len(ctx.files.restart_on),
             restart_watch_paths = restart_watch_paths,
         ),
@@ -121,7 +129,6 @@ done
         ),
     ]
 
-
 bun_dev = rule(
     implementation = _bun_dev_impl,
     attrs = {
@@ -136,6 +143,10 @@ bun_dev = rule(
         "restart_on": attr.label_list(allow_files = True),
         "node_modules": attr.label(),
         "data": attr.label_list(allow_files = True),
+        "working_dir": attr.string(
+            default = "workspace",
+            values = ["workspace", "entry_point"],
+        ),
     },
     executable = True,
     toolchains = ["//bun:toolchain_type"],

@@ -17,10 +17,18 @@ runfiles_dir="${{RUNFILES_DIR:-$0.runfiles}}"
 bun_bin="${{runfiles_dir}}/_main/{bun_short_path}"
 entry_point="${{runfiles_dir}}/_main/{entry_short_path}"
 
-exec "${{bun_bin}}" run "${{entry_point}}" "$@"
+working_dir="{working_dir}"
+if [[ "${{working_dir}}" == "entry_point" ]]; then
+    cd "$(dirname "${{entry_point}}")"
+else
+    cd "${{runfiles_dir}}/_main"
+fi
+
+exec "${{bun_bin}}" --bun run "${{entry_point}}" "$@"
 """.format(
             bun_short_path = bun_bin.short_path,
             entry_short_path = entry_point.short_path,
+            working_dir = ctx.attr.working_dir,
         ),
     )
 
@@ -50,6 +58,10 @@ bun_binary = rule(
         ),
         "node_modules": attr.label(),
         "data": attr.label_list(allow_files = True),
+        "working_dir": attr.string(
+            default = "workspace",
+            values = ["workspace", "entry_point"],
+        ),
     },
     executable = True,
     toolchains = ["//bun:toolchain_type"],
