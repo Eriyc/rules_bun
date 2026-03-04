@@ -11,7 +11,7 @@ def _bun_test_impl(ctx):
     toolchain = ctx.toolchains["//bun:toolchain_type"]
     bun_bin = toolchain.bun.bun_bin
 
-    src_args = " ".join([_shell_quote(src.path) for src in ctx.files.srcs])
+    src_args = " ".join([_shell_quote(src.short_path) for src in ctx.files.srcs])
     launcher = ctx.actions.declare_file(ctx.label.name)
     ctx.actions.write(
         output = launcher,
@@ -19,16 +19,22 @@ def _bun_test_impl(ctx):
         content = """#!/usr/bin/env bash
 set -euo pipefail
 
-extra_args=()
+runfiles_dir="${{RUNFILES_DIR:-$0.runfiles}}"
+bun_bin="${{runfiles_dir}}/_main/{bun_short_path}"
+cd "${{runfiles_dir}}/_main"
+
+if [[ -n "${{TESTBRIDGE_TEST_ONLY:-}}" && -n "${{COVERAGE_DIR:-}}" ]]; then
+    exec "${{bun_bin}}" test {src_args} --test-name-pattern "${{TESTBRIDGE_TEST_ONLY}}" --coverage "$@"
+fi
 if [[ -n "${{TESTBRIDGE_TEST_ONLY:-}}" ]]; then
-  extra_args+=("--test-name-pattern" "${{TESTBRIDGE_TEST_ONLY}}")
+    exec "${{bun_bin}}" test {src_args} --test-name-pattern "${{TESTBRIDGE_TEST_ONLY}}" "$@"
 fi
 if [[ -n "${{COVERAGE_DIR:-}}" ]]; then
-  extra_args+=("--coverage")
+    exec "${{bun_bin}}" test {src_args} --coverage "$@"
 fi
-exec "{bun_bin}" test {src_args} "${{extra_args[@]}}" "$@"
+exec "${{bun_bin}}" test {src_args} "$@"
 """.format(
-            bun_bin = bun_bin.path,
+                        bun_short_path = bun_bin.short_path,
             src_args = src_args,
         ),
     )

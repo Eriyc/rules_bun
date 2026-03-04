@@ -1,12 +1,52 @@
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
+config_setting(
+    name = "linux_x86_64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+config_setting(
+    name = "linux_aarch64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+    ],
+)
+
+config_setting(
+    name = "darwin_x86_64",
+    constraint_values = [
+        "@platforms//os:macos",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+config_setting(
+    name = "darwin_aarch64",
+    constraint_values = [
+        "@platforms//os:macos",
+        "@platforms//cpu:aarch64",
+    ],
+)
+
 sh_test(
     name = "bun_version_test",
     srcs = ["toolchain_version.sh"],
-    args = ["$(location @bun_linux_x64//:bun)"],
-    data = ["@bun_linux_x64//:bun"],
-    target_compatible_with = [
-        "@platforms//cpu:x86_64",
-        "@platforms//os:linux",
-    ],
+    args = select({
+        ":linux_x86_64": ["$(location @bun_linux_x64//:bun)"],
+        ":linux_aarch64": ["$(location @bun_linux_aarch64//:bun)"],
+        ":darwin_x86_64": ["$(location @bun_darwin_x64//:bun)"],
+        ":darwin_aarch64": ["$(location @bun_darwin_aarch64//:bun)"],
+        "//conditions:default": ["$(location @bun_linux_x64//:bun)"],
+    }),
+    data = select({
+        ":linux_x86_64": ["@bun_linux_x64//:bun"],
+        ":linux_aarch64": ["@bun_linux_aarch64//:bun"],
+        ":darwin_x86_64": ["@bun_darwin_x64//:bun"],
+        ":darwin_aarch64": ["@bun_darwin_aarch64//:bun"],
+        "//conditions:default": ["@bun_linux_x64//:bun"],
+    }),
 )

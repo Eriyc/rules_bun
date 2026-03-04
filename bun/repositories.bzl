@@ -63,7 +63,7 @@ def bun_repositories(version = BUN_VERSION):
         )
 
 
-def bun_register_toolchains(version = BUN_VERSION):
+def bun_register_toolchains(name = "bun", version = BUN_VERSION):
     bun_repositories(version = version)
     native.register_toolchains(
         "//bun:darwin_aarch64_toolchain",
