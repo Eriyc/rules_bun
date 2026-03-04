@@ -72,6 +72,7 @@ load(
 	"@rules_bun//bun:defs.bzl",
 	"bun_binary",
 	"bun_bundle",
+	"bun_dev",
 	"bun_test",
 	"js_library",
 	"ts_library",
@@ -101,3 +102,39 @@ Run one of your bun-backed targets, for example:
 ```bash
 bazel test //path/to:your_bun_test
 ```
+
+## Development mode (`bun_dev`)
+
+Use `bun_dev` for long-running local development with Bun watch mode.
+
+```starlark
+load("@rules_bun//bun:defs.bzl", "bun_dev")
+
+bun_dev(
+	name = "web_dev",
+	entry_point = "src/main.ts",
+)
+```
+
+Run it with:
+
+```bash
+bazel run //path/to:web_dev
+```
+
+`bun_dev` supports:
+
+- `watch_mode = "watch"` (default) for `bun --watch`
+- `watch_mode = "hot"` for `bun --hot`
+- `restart_on = [...]` to force full process restarts when specific files change
+
+### Hybrid Go + Bun + protobuf workflow
+
+For monorepos that mix Go and Bun (including FFI):
+
+1. Run Bun app with native watch/HMR via `bun_dev`.
+2. Put generated artifacts or bridge files in `restart_on` (for example generated JS/TS files from proto/go steps).
+3. Rebuild Go/proto artifacts separately (for example with `ibazel build`) so their output files change.
+4. `bun_dev` detects those `restart_on` changes and restarts Bun, while ordinary JS edits continue to use Bun watch/HMR without full Bazel restarts.
+
+This keeps the fast Bun JS loop while still supporting full restarts when non-JS dependencies change.
