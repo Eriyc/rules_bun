@@ -78,6 +78,11 @@ _bun_install_repository = repository_rule(
 def bun_install(name, package_json, bun_lockfile):
     """Create an external repository containing installed node_modules.
 
+    Args:
+      name: Repository name to create.
+      package_json: Label to a package.json file.
+      bun_lockfile: Label to a bun.lockb file.
+
     Usage (WORKSPACE):
       bun_install(
           name = "node_modules",
