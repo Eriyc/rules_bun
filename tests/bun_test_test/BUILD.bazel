@@ -1,5 +1,5 @@
-load("//bun:defs.bzl", "bun_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("//bun:defs.bzl", "bun_test")
 
 bun_test(
     name = "passing_suite",
