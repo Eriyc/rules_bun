@@ -88,7 +88,7 @@
                 name = "Bazel";
                 bin = "${bazel9}/bin/bazel";
                 versionCmd = "--version";
-                color = "BLUE";
+                color = "GREEN";
               }
             ];
 
