@@ -28,3 +28,9 @@ Phase 4 bootstrap is in place:
 - Test rule `bun_test` (`/internal/bun_test.bzl`)
 - Public export via `bun/defs.bzl`
 - Focused passing/failing test targets (`//tests/bun_test_test:all`)
+
+Phase 5 bootstrap is in place:
+
+- Bundle rule `bun_bundle` (`/internal/bun_bundle.bzl`)
+- Public export via `bun/defs.bzl`
+- Focused output/minify tests (`//tests/bundle_test:all`)
