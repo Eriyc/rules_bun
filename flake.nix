@@ -136,6 +136,36 @@
                 sed -E -i 's#^([[:space:]]*version[[:space:]]*=[[:space:]]*")[^"]*(",)$#\1'"$FULL_VERSION"'\2#' "$ROOT_DIR/MODULE.bazel"
               '';
             }
+            {
+              run = ''
+                README="$ROOT_DIR/README.md"
+                TMP="$README.tmp"
+
+                awk -v stable="$BASE_VERSION" -v prerelease="$BASE_VERSION-rc.1" '
+                  {
+                    line = $0
+
+                    if (line ~ /bazel_dep\(name = "rules_bun", version = "/ && line !~ /-rc\.1/) {
+                      sub(/version = "[^"]+"/, "version = \"" stable "\"", line)
+                    } else if (line ~ /bazel_dep\(name = "rules_bun", version = "/ && line ~ /-rc\.1/) {
+                      sub(/version = "[^"]+"/, "version = \"" prerelease "\"", line)
+                    } else if (line ~ /archive\/refs\/tags\/v/ && line !~ /-rc\.1/) {
+                      sub(/v[^"]+\.tar\.gz/, "v" stable ".tar.gz", line)
+                    } else if (line ~ /archive\/refs\/tags\/v/ && line ~ /-rc\.1/) {
+                      sub(/v[^"]+\.tar\.gz/, "v" prerelease ".tar.gz", line)
+                    } else if (line ~ /strip_prefix = "rules_bun-v/ && line !~ /-rc\.1/) {
+                      sub(/rules_bun-v[^"]+/, "rules_bun-v" stable, line)
+                    } else if (line ~ /strip_prefix = "rules_bun-v/ && line ~ /-rc\.1/) {
+                      sub(/rules_bun-v[^"]+/, "rules_bun-v" prerelease, line)
+                    } else if (line ~ /For channel\/pre-release tags \(for example `v.*-rc\.1`\), use the matching folder prefix:/) {
+                      sub(/`v[^`]+`/, "`v" prerelease "`", line)
+                    }
+
+                    print line
+                  }
+                ' "$README" > "$TMP" && mv "$TMP" "$README"
+              '';
+            }
           ];
 
           postVersion = ''
