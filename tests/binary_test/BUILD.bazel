@@ -3,7 +3,6 @@ load("//bun:defs.bzl", "bun_binary")
 bun_binary(
     name = "hello_js_bin",
     entry_point = "hello.js",
-    data = ["hello.js"],
 )
 
 sh_test(
@@ -20,7 +19,6 @@ sh_test(
 bun_binary(
     name = "hello_ts_bin",
     entry_point = "hello.ts",
-    data = ["hello.ts"],
 )
 
 sh_test(
