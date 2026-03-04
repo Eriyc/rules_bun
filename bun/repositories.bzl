@@ -1,6 +1,5 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-
-_BUN_VERSION = "1.1.38"
+load(":version.bzl", "BUN_VERSION")
 
 _BUN_ARCHIVES = {
     "bun_linux_x64": {
@@ -30,6 +29,8 @@ _BUN_ARCHIVES = {
     },
 }
 
+_BUN_GITHUB_RELEASE_URL_TEMPLATE = "https://github.com/oven-sh/bun/releases/download/bun-v{}/{}"
+
 
 def _declare_bun_repo(name, asset, sha256, binary, version):
     if native.existing_rule(name):
@@ -37,7 +38,7 @@ def _declare_bun_repo(name, asset, sha256, binary, version):
 
     http_archive(
         name = name,
-        urls = ["https://github.com/oven-sh/bun/releases/download/bun-v{}/{}".format(version, asset)],
+        urls = [_BUN_GITHUB_RELEASE_URL_TEMPLATE.format(version, asset)],
         sha256 = sha256,
         build_file_content = """
 exports_files(["{binary}"])
@@ -51,7 +52,7 @@ filegroup(
     )
 
 
-def bun_repositories(version = _BUN_VERSION):
+def bun_repositories(version = BUN_VERSION):
     for name, metadata in _BUN_ARCHIVES.items():
         _declare_bun_repo(
             name = name,
@@ -62,7 +63,7 @@ def bun_repositories(version = _BUN_VERSION):
         )
 
 
-def bun_register_toolchains(version = _BUN_VERSION):
+def bun_register_toolchains(version = BUN_VERSION):
     bun_repositories(version = version)
     native.register_toolchains(
         "//bun:darwin_aarch64_toolchain",
