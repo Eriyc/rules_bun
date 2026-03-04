@@ -1,0 +1,21 @@
+sh_test(
+    name = "bun_install_clean_install_test",
+    srcs = ["clean_install.sh"],
+    args = ["$(location @bun_linux_x64//:bun)"],
+    data = ["@bun_linux_x64//:bun"],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+)
+
+sh_test(
+    name = "bun_install_stale_lockfile_test",
+    srcs = ["stale_lockfile.sh"],
+    args = ["$(location @bun_linux_x64//:bun)"],
+    data = ["@bun_linux_x64//:bun"],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+)
