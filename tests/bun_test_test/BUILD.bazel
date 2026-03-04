@@ -1,4 +1,5 @@
 load("//bun:defs.bzl", "bun_test")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 bun_test(
     name = "passing_suite",
@@ -8,5 +9,32 @@ bun_test(
 bun_test(
     name = "failing_suite",
     srcs = ["failing.test.ts"],
-    tags = ["manual"],
+)
+
+sh_test(
+    name = "bun_test_failing_suite_test",
+    srcs = ["failing_suite_shape.sh"],
+    args = ["$(location //tests/bun_test_test:BUILD.bazel)"],
+    data = ["//tests/bun_test_test:BUILD.bazel"],
+)
+
+sh_test(
+    name = "bun_test_cache_hit_test",
+    srcs = ["cache_hit_shape.sh"],
+    args = ["$(location //internal:bun_test.bzl)"],
+    data = ["//internal:bun_test.bzl"],
+)
+
+sh_test(
+    name = "bun_test_cache_miss_test",
+    srcs = ["cache_miss_shape.sh"],
+    args = ["$(location //internal:bun_test.bzl)"],
+    data = ["//internal:bun_test.bzl"],
+)
+
+sh_test(
+    name = "bun_test_junit_output_test",
+    srcs = ["junit_shape.sh"],
+    args = ["$(location //internal:bun_test.bzl)"],
+    data = ["//internal:bun_test.bzl"],
 )
