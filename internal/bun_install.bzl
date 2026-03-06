@@ -30,9 +30,13 @@ def _bun_install_repository_impl(repository_ctx):
         fail("bun_install: bun_lockfile not found: {}".format(repository_ctx.attr.bun_lockfile))
 
     bun_bin = _select_bun_binary(repository_ctx)
+    lockfile_name = bun_lockfile.basename
+
+    if lockfile_name not in ["bun.lock", "bun.lockb"]:
+        lockfile_name = "bun.lock"
 
     repository_ctx.symlink(package_json, "package.json")
-    repository_ctx.symlink(bun_lockfile, "bun.lockb")
+    repository_ctx.symlink(bun_lockfile, lockfile_name)
 
     result = repository_ctx.execute(
         [str(bun_bin), "--bun", "install", "--frozen-lockfile", "--no-progress"],
@@ -64,11 +68,11 @@ bun_install_repository = repository_rule(
     attrs = {
         "package_json": attr.label(mandatory = True, allow_single_file = True),
         "bun_lockfile": attr.label(mandatory = True, allow_single_file = True),
-        "bun_linux_x64": attr.label(default = "@bun_linux_x64//:bun", allow_single_file = True),
-        "bun_linux_aarch64": attr.label(default = "@bun_linux_aarch64//:bun", allow_single_file = True),
-        "bun_darwin_x64": attr.label(default = "@bun_darwin_x64//:bun", allow_single_file = True),
-        "bun_darwin_aarch64": attr.label(default = "@bun_darwin_aarch64//:bun", allow_single_file = True),
-        "bun_windows_x64": attr.label(default = "@bun_windows_x64//:bun", allow_single_file = True),
+        "bun_linux_x64": attr.label(default = "@bun_linux_x64//:bun-linux-x64/bun", allow_single_file = True),
+        "bun_linux_aarch64": attr.label(default = "@bun_linux_aarch64//:bun-linux-aarch64/bun", allow_single_file = True),
+        "bun_darwin_x64": attr.label(default = "@bun_darwin_x64//:bun-darwin-x64/bun", allow_single_file = True),
+        "bun_darwin_aarch64": attr.label(default = "@bun_darwin_aarch64//:bun-darwin-aarch64/bun", allow_single_file = True),
+        "bun_windows_x64": attr.label(default = "@bun_windows_x64//:bun-windows-x64/bun.exe", allow_single_file = True),
     },
 )
 

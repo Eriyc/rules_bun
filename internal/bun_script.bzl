@@ -23,6 +23,15 @@ bun_bin="${{runfiles_dir}}/_main/{bun_short_path}"
 package_json="${{runfiles_dir}}/_main/{package_json_short_path}"
 package_dir="$(dirname "${{package_json}}")"
 
+node_modules_bin_dirs=()
+while IFS= read -r node_modules_bin; do
+    node_modules_bin_dirs+=("${{node_modules_bin}}")
+done < <(find "${{runfiles_dir}}" -type d -path '*/node_modules/.bin' 2>/dev/null | sort)
+
+if [[ ${{#node_modules_bin_dirs[@]}} -gt 0 ]]; then
+    export PATH="$(IFS=:; echo "${{node_modules_bin_dirs[*]}}"):${{PATH}}"
+fi
+
 working_dir="{working_dir}"
 if [[ "${{working_dir}}" == "package" ]]; then
     cd "${{package_dir}}"

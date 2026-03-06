@@ -11,6 +11,7 @@
 build/
 dist/
 node_modules/
+*/node_modules/
 
 # Directories for the Bazel IntelliJ plugin containing the generated
 # IntelliJ project files and plugin configuration. Seperate directories are
@@ -20,3 +21,5 @@ node_modules/
 /.clwb/
 
 .env
+!tests/.env
+!examples/.env

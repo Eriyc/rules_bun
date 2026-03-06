@@ -18,6 +18,14 @@ use_repo(
     "bun_windows_x64",
 )
 
+bun_install_ext = use_extension("//bun:extensions.bzl", "bun_install")
+bun_install_ext.install(
+    name = "script_test_vite_node_modules",
+    package_json = "//tests/script_test:vite_app/package.json",
+    bun_lockfile = "//tests/script_test:vite_app/bun.lock",
+)
+use_repo(bun_install_ext, "script_test_vite_node_modules")
+
 register_toolchains(
     "//bun:darwin_aarch64_toolchain",
     "//bun:darwin_x64_toolchain",

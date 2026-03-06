@@ -189,8 +189,8 @@
   "moduleExtensions": {
     "//bun:extensions.bzl%bun": {
       "general": {
-        "bzlTransitiveDigest": "oLR98WtKDCc+zh7Tvu9jtakNg8q/T1IPE38QR1FEQtI=",
-        "usagesDigest": "NfJgMuTjZXXRLr1/kxxFkS1IKV2UyehFyr3fMvAke/k=",
+        "bzlTransitiveDigest": "83P5DLnVhSu3AwYrHPGqYVY/L6twnM4Jnlhc8uAOOls=",
+        "usagesDigest": "qk1PDh3WICa0VONYKXJLsmWCesNJxz3Jkb/aH/voIeI=",
         "recordedInputs": [
           "REPO_MAPPING:,bazel_tools bazel_tools"
         ],
@@ -243,6 +243,24 @@
               ],
               "sha256": "7a77b3e245e2e26965c93089a4a1332e8a326d3364c89fae1d1fd99cdd3cd73d",
               "build_file_content": "\nexports_files([\"bun-windows-x64/bun.exe\"])\n\nfilegroup(\n    name = \"bun\",\n    srcs = [\"bun-windows-x64/bun.exe\"],\n    visibility = [\"//visibility:public\"],\n)\n"
+            }
+          }
+        }
+      }
+    },
+    "//bun:extensions.bzl%bun_install": {
+      "general": {
+        "bzlTransitiveDigest": "83P5DLnVhSu3AwYrHPGqYVY/L6twnM4Jnlhc8uAOOls=",
+        "usagesDigest": "r8Bik2FdMIUMCNUMdEfwvoy+Yaru70lPjHGWflG1wIc=",
+        "recordedInputs": [
+          "REPO_MAPPING:,bazel_tools bazel_tools"
+        ],
+        "generatedRepoSpecs": {
+          "script_test_vite_node_modules": {
+            "repoRuleId": "@@//internal:bun_install.bzl%bun_install_repository",
+            "attributes": {
+              "package_json": "@@//tests/script_test:vite_app/package.json",
+              "bun_lockfile": "@@//tests/script_test:vite_app/bun.lock"
             }
           }
         }

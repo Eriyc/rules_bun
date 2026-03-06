@@ -28,9 +28,17 @@
         system:
         let
           pkgs = import nixpkgs { inherit system; };
+          bazelDefaultArgs =
+            if pkgs.stdenv.hostPlatform.isDarwin then
+              [
+                "--macos_minimum_os=10.12"
+                "--host_macos_minimum_os=10.12"
+              ]
+            else
+              [ ];
           bazel9 = pkgs.writeShellScriptBin "bazel" ''
             export USE_BAZEL_VERSION="''${USE_BAZEL_VERSION:-9.0.0}"
-            exec ${pkgs.bazelisk}/bin/bazelisk "$@"
+            exec ${pkgs.bazelisk}/bin/bazelisk ${pkgs.lib.escapeShellArgs bazelDefaultArgs} "$@"
           '';
           env = devshell-lib.lib.mkDevShell {
             inherit system;
@@ -46,7 +54,7 @@
             ];
 
             features = {
-              oxfmt = true;
+              oxfmt = false;
             };
 
             formatters = {

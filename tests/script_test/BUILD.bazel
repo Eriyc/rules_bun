@@ -31,3 +31,21 @@ sh_test(
     args = ["$(location :env_script)"],
     data = [":env_script"],
 )
+
+bun_script(
+    name = "vite_dev_server",
+    script = "dev",
+    package_json = "vite_app/package.json",
+    node_modules = "@script_test_vite_node_modules//:node_modules",
+    data = [
+        "vite_app/index.html",
+        "vite_app/main.js",
+    ],
+)
+
+sh_test(
+    name = "bun_script_vite_app_test",
+    srcs = ["run_vite_app.sh"],
+    args = ["$(location :vite_dev_server)"],
+    data = [":vite_dev_server"],
+)
