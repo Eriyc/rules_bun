@@ -1,191 +1,197 @@
-# rules_bun
+# Bun rules for [Bazel](https://bazel.build)
 
-Bazel rules for bun.
+`rules_bun` provides Bazel rules for running, testing, bundling, and developing
+JavaScript and TypeScript code with Bun.
 
-## Rule reference
+## Repository layout
+
+This repository follows the standard Bazel ruleset layout:
+
+```text
+/
+  MODULE.bazel
+  README.md
+  bun/
+    BUILD.bazel
+    defs.bzl
+    extensions.bzl
+    repositories.bzl
+    toolchain.bzl
+  docs/
+  examples/
+  tests/
+```
+
+The public entrypoint for rule authors and users is `@rules_bun//bun:defs.bzl`.
+
+## Public API
+
+`rules_bun` exports these primary rules:
+
+- `bun_binary`
+- `bun_bundle`
+- `bun_dev`
+- `bun_script`
+- `bun_test`
+- `js_library`
+- `ts_library`
+
+Reference documentation:
 
 - Published docs site: https://eriyc.github.io/rules_bun/
-- Generated API docs: [docs/rules.md](docs/rules.md)
-- Regenerate: `bazel build //docs:rules_md && cp bazel-bin/docs/rules.md docs/rules.md`
+- Generated rule reference: [docs/rules.md](docs/rules.md)
+- Docs index: [docs/index.md](docs/index.md)
 
-## Use
+To refresh generated rule docs:
 
-These steps show how to consume a tagged release of `rules_bun` in a separate Bazel workspace.
+```bash
+bazel build //docs:rules_md && cp bazel-bin/docs/rules.md docs/rules.md
+```
 
-### 1) Add the module dependency
+## Bzlmod usage
 
-In your project's `MODULE.bazel`, add:
+Release announcements should provide a copy-pasteable module snippet in the
+standard ruleset form:
 
 ```starlark
 bazel_dep(name = "rules_bun", version = "0.2.0")
-
-archive_override(
-	module_name = "rules_bun",
-	urls = ["https://github.com/Eriyc/rules_bun/archiv0.0.5.tar.gz"],
-	strip_prefix = "rules_bun-v0.2.0",
-)
 ```
 
-For channel/pre-release tags (for example `v0.2.0-rc.1`), use the matching folder prefix:
-
-```starlark
-bazel_dep(name = "rules_bun", version = "0.2.0-rc.1")
-
-archive_override(
-	module_name = "rules_bun",
-	urls = ["https://github.com/Eriyc/rules_bun/archiv0.0.5-rc.1.tar.gz"],
-	strip_prefix = "rules_bun-v0.2.0-rc.1",
-)
-```
-
-Note: keep the `v` prefix in the Git tag URL and `strip_prefix`; for `bazel_dep(..., version = ...)`, use the module version string without the leading `v`.
-
-### 2) Create Bun repositories with the extension
-
-Still in `MODULE.bazel`, add:
+Then add the Bun repositories and register the toolchains in `MODULE.bazel`:
 
 ```starlark
 bun_ext = use_extension("@rules_bun//bun:extensions.bzl", "bun")
 
 use_repo(
-	bun_ext,
-	"bun_linux_x64",
-	"bun_linux_aarch64",
-	"bun_darwin_x64",
-	"bun_darwin_aarch64",
-	"bun_windows_x64",
+    bun_ext,
+    "bun_linux_x64",
+    "bun_linux_aarch64",
+    "bun_darwin_x64",
+    "bun_darwin_aarch64",
+    "bun_windows_x64",
 )
-```
 
-### 3) Register toolchains
-
-Also in `MODULE.bazel`, register:
-
-```starlark
 register_toolchains(
-	"@rules_bun//bun:darwin_aarch64_toolchain",
-	"@rules_bun//bun:darwin_x64_toolchain",
-	"@rules_bun//bun:linux_aarch64_toolchain",
-	"@rules_bun//bun:linux_x64_toolchain",
-	"@rules_bun//bun:windows_x64_toolchain",
+    "@rules_bun//bun:darwin_aarch64_toolchain",
+    "@rules_bun//bun:darwin_x64_toolchain",
+    "@rules_bun//bun:linux_aarch64_toolchain",
+    "@rules_bun//bun:linux_x64_toolchain",
+    "@rules_bun//bun:windows_x64_toolchain",
 )
 ```
 
-### 4) Load rules in `BUILD.bazel`
-
-```starlark
-load(
-	"@rules_bun//bun:defs.bzl",
-	"bun_binary",
-	"bun_bundle",
-	"bun_dev",
-	"bun_script",
-	"bun_test",
-	"js_library",
-	"ts_library",
-)
-```
-
-### 5) (Optional) Use `bun_install` module extension
-
-If you want Bazel-managed install repositories, add:
+If you want Bazel-managed dependency installation, also add the module
+extension for `bun_install`:
 
 ```starlark
 bun_install_ext = use_extension("@rules_bun//bun:extensions.bzl", "bun_install")
 
 bun_install_ext.install(
-	name = "npm",
-	package_json = "//:package.json",
-	bun_lockfile = "//:bun.lock",
+    name = "npm",
+    package_json = "//:package.json",
+    bun_lockfile = "//:bun.lock",
 )
 
 use_repo(bun_install_ext, "npm")
 ```
 
-### 6) Verify setup
+## Legacy WORKSPACE usage
 
-Run one of your bun-backed targets, for example:
+For non-Bzlmod consumers, the repository exposes a legacy setup macro in
+`@rules_bun//bun:repositories.bzl`:
 
-```bash
-bazel test //path/to:your_bun_test
+```starlark
+load("@rules_bun//bun:repositories.bzl", "bun_register_toolchains")
+
+bun_register_toolchains()
 ```
 
-All `rules_bun` rule-driven Bun invocations pass `--bun`.
+## Loading rules in BUILD files
 
-## Package scripts (`bun_script`)
+```starlark
+load(
+    "@rules_bun//bun:defs.bzl",
+    "bun_binary",
+    "bun_bundle",
+    "bun_dev",
+    "bun_script",
+    "bun_test",
+    "js_library",
+    "ts_library",
+)
+```
 
-Use `bun_script` to expose a `package.json` script as a Bazel executable target.
+## Common workflows
+
+### `bun_script` for package scripts
+
+Use `bun_script` to expose a `package.json` script as a Bazel executable.
+This is the recommended way to run Vite-style `dev`, `build`, and `preview`
+scripts.
 
 ```starlark
 load("@rules_bun//bun:defs.bzl", "bun_script")
 
 bun_script(
-	name = "web_dev",
-	script = "dev",
-	package_json = "package.json",
-	node_modules = "@npm//:node_modules",
-	data = glob([
-		"src/**",
-		"static/**",
-		"vite.config.*",
-		"svelte.config.*",
-		"tsconfig*.json",
-	]),
+    name = "web_dev",
+    script = "dev",
+    package_json = "package.json",
+    node_modules = "@npm//:node_modules",
+    data = glob([
+        "src/**",
+        "static/**",
+        "vite.config.*",
+        "svelte.config.*",
+        "tsconfig*.json",
+    ]),
 )
 ```
 
-Run it with:
+When `node_modules` is provided, executables from `node_modules/.bin` are added
+to `PATH`.
 
-```bash
-bazel run //path/to:web_dev -- --host
-```
+### `bun_dev` for local development
 
-`bun_script` defaults to running from the directory containing `package.json`, which matches the usual expectations for `vite`, `svelte-kit`, and similar package scripts.
-
-## Development mode (`bun_dev`)
-
-Use `bun_dev` for long-running local development with Bun watch mode.
+Use `bun_dev` for long-running watch or hot-reload development targets.
 
 ```starlark
 load("@rules_bun//bun:defs.bzl", "bun_dev")
 
 bun_dev(
-	name = "web_dev",
-	entry_point = "src/main.ts",
-	# Optional: run from the entry point directory so Bun auto-loads colocated .env files.
-	# working_dir = "entry_point",
+    name = "web_dev",
+    entry_point = "src/main.ts",
+    # Optional: run from the entry point directory so Bun auto-loads colocated .env files.
+    # working_dir = "entry_point",
 )
 ```
 
-Run it with:
+Supported development options include:
 
-```bash
-bazel run //path/to:web_dev
-```
+- `watch_mode = "watch"`
+- `watch_mode = "hot"`
+- `restart_on = [...]`
+- `working_dir = "workspace" | "entry_point"`
 
-`bun_dev` supports:
-
-- `watch_mode = "watch"` (default) for `bun --watch`
-- `watch_mode = "hot"` for `bun --hot`
-- `restart_on = [...]` to force full process restarts when specific files change
-- `working_dir = "workspace" | "entry_point"` (default: `workspace`)
-
-## Runtime working directory (`bun_binary`, `bun_dev`)
+### Working directory behavior
 
 `bun_binary` and `bun_dev` support `working_dir`:
 
-- `"workspace"` (default): runs from the Bazel runfiles workspace root.
-- `"entry_point"`: runs from the nearest ancestor of the entry point that contains `.env` or `package.json` (falls back to the entry point directory).
+- `"workspace"`: run from the Bazel runfiles workspace root.
+- `"entry_point"`: run from the nearest ancestor of the entry point that
+  contains `.env` or `package.json`.
 
-Use `"entry_point"` when Bun should resolve local files such as colocated `.env` files relative to the program directory.
+## Tests and examples
 
-### Hybrid Go + Bun + protobuf workflow
+The repository keeps conformance and integration coverage in [tests/](tests/) and
+usage samples in [examples/](examples/).
 
-For monorepos that mix Go and Bun (including FFI):
+Representative example docs:
 
-1. Run Bun app with native watch/HMR via `bun_dev`.
-2. Put generated artifacts or bridge files in `restart_on` (for example generated JS/TS files from proto/go steps).
-3. Rebuild Go/proto artifacts separately (for example with `ibazel build`) so their output files change.
-4. `bun_dev` detects those `restart_on` changes and restarts Bun, while ordinary JS edits continue to use Bun watch/HMR without full Bazel restarts.
+- [examples/basic/README.md](examples/basic/README.md)
+- [examples/workspace/README.md](examples/workspace/README.md)
 
-This keeps the fast Bun JS loop while still supporting full restarts when non-JS dependencies change.
+To validate the ruleset locally:
+
+```bash
+bazel test //tests/...
+```

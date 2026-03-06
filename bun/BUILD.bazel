@@ -5,11 +5,27 @@ load(":version.bzl", "BUN_VERSION")
 exports_files([
     "defs.bzl",
     "extensions.bzl",
+    "repositories.bzl",
+    "toolchain.bzl",
+    "version.bzl",
 ])
 
 bzl_library(
     name = "toolchain_bzl",
     srcs = ["toolchain.bzl"],
+    visibility = ["//visibility:public"],
+)
+
+bzl_library(
+    name = "extensions_bzl",
+    srcs = ["extensions.bzl"],
+    visibility = ["//visibility:public"],
+    deps = ["//internal:bun_install_bzl"],
+)
+
+bzl_library(
+    name = "repositories_bzl",
+    srcs = ["repositories.bzl"],
     visibility = ["//visibility:public"],
 )
 

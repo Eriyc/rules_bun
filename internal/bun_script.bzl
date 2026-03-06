@@ -70,7 +70,10 @@ bun_script = rule(
     doc = """Runs a named `package.json` script with Bun as an executable target.
 
 Use this rule to expose existing package scripts such as `dev`, `build`, or
-`check` via `bazel run` without adding wrapper shell scripts.
+`check` via `bazel run` without adding wrapper shell scripts. This is a good fit
+for Vite-style workflows, where scripts like `vite dev` or `vite build` are
+declared in `package.json` and expect to run from the package directory with
+`node_modules/.bin` available on `PATH`.
 """,
     attrs = {
         "script": attr.string(
@@ -83,7 +86,7 @@ Use this rule to expose existing package scripts such as `dev`, `build`, or
             doc = "Label of the `package.json` file containing the named script.",
         ),
         "node_modules": attr.label(
-            doc = "Optional label providing Bun/npm package files in runfiles.",
+            doc = "Optional label providing Bun/npm package files in runfiles. Executables from `node_modules/.bin` are added to `PATH`, which is useful for scripts such as `vite`.",
         ),
         "data": attr.label_list(
             allow_files = True,
@@ -92,7 +95,7 @@ Use this rule to expose existing package scripts such as `dev`, `build`, or
         "working_dir": attr.string(
             default = "package",
             values = ["workspace", "package"],
-            doc = "Working directory at runtime: Bazel runfiles `workspace` root or the directory containing `package.json`.",
+            doc = "Working directory at runtime: Bazel runfiles `workspace` root or the directory containing `package.json`. The default `package` mode matches tools such as Vite that resolve config and assets relative to the package directory.",
         ),
     },
     executable = True,

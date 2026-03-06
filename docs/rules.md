@@ -30,13 +30,17 @@ Attributes:
 
 Runs a named `package.json` script with Bun as an executable target (`bazel run`).
 
+Recommended for package-script based tools such as Vite (`dev`, `build`, `preview`).
+When `node_modules` is provided, executables from `node_modules/.bin` are added
+to `PATH`, so scripts like `vite` work without wrapper scripts.
+
 Attributes:
 
 - `script` (string, required): package script name passed to `bun run <script>`.
 - `package_json` (label, required): `package.json` file containing the named script.
 - `node_modules` (label, optional): Bun/npm package files in runfiles.
 - `data` (label_list, optional): additional runtime files for the script.
-- `working_dir` (string, default: `"package"`, values: `"workspace" | "package"`): runtime working directory.
+- `working_dir` (string, default: `"package"`, values: `"workspace" | "package"`): runtime working directory. The default is a good fit for Vite and similar package-script based tools.
 
 ## bun_bundle
 
