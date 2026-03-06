@@ -58,8 +58,10 @@ bun = module_extension(
 _install = tag_class(
     attrs = {
         "name": attr.string(mandatory = True),
-        "package_json": attr.string(mandatory = True),
-        "bun_lockfile": attr.string(mandatory = True),
+        "package_json": attr.label(mandatory = True),
+        "bun_lockfile": attr.label(mandatory = True),
+        "install_inputs": attr.label_list(allow_files = True),
+        "isolated_home": attr.bool(default = True),
     },
 )
 
@@ -71,6 +73,8 @@ def _bun_install_impl(ctx):
                 name = install.name,
                 package_json = install.package_json,
                 bun_lockfile = install.bun_lockfile,
+                install_inputs = install.install_inputs,
+                isolated_home = install.isolated_home,
             )
 
 

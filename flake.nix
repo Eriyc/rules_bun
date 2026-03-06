@@ -65,7 +65,10 @@
             additionalHooks = {
               tests = {
                 enable = true;
-                entry = "echo 'No tests defined yet.'";
+                entry = ''
+                  bazel test //tests/... --test_output=errors
+                  tests/install_test/workspace_parity.sh "$(command -v bun)"
+                '';
                 pass_filenames = false;
                 stages = [ "pre-push" ];
               };

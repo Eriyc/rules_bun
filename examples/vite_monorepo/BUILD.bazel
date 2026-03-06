@@ -1,33 +1,51 @@
-load("//bun:defs.bzl", "bun_script")
+load("@rules_bun//bun:defs.bzl", "bun_script")
 
-package(default_visibility = ["//visibility:public"])
+# //:BUILD.bazel
+load("@rules_multirun//:defs.bzl", "multirun")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
-exports_files([
-    "README.md",
-    "package.json",
-    "bun.lock",
-    "apps/app-a/package.json",
-    "apps/app-b/package.json",
-])
+multirun(
+    name = "dev",
+    commands = [
+        ":app_a_dev",
+        ":app_b_dev",
+    ],
+    jobs = 0,
+)
 
 bun_script(
     name = "app_a_dev",
-    script = "dev",
-    package_json = "apps/app-a/package.json",
-    node_modules = "@examples_vite_monorepo_node_modules//:node_modules",
     data = [
         "apps/app-a/index.html",
         "apps/app-a/main.js",
+        "apps/app-a/vite.config.js",
     ],
+    node_modules = "@node_modules//:node_modules",
+    package_json = "apps/app-a/package.json",
+    script = "dev",
 )
 
 bun_script(
     name = "app_b_dev",
-    script = "dev",
-    package_json = "apps/app-b/package.json",
-    node_modules = "@examples_vite_monorepo_node_modules//:node_modules",
     data = [
         "apps/app-b/index.html",
         "apps/app-b/main.js",
+        "apps/app-b/vite.config.js",
+    ],
+    node_modules = "@node_modules//:node_modules",
+    package_json = "apps/app-b/package.json",
+    script = "dev",
+)
+
+sh_test(
+    name = "vite_monorepo_workspace_resolution_test",
+    srcs = ["run_vite_monorepo_apps.sh"],
+    args = [
+        "$(location :app_a_dev)",
+        "$(location :app_b_dev)",
+    ],
+    data = [
+        ":app_a_dev",
+        ":app_b_dev",
     ],
 )

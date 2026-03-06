@@ -190,12 +190,12 @@
   },
   "selectedYankedVersions": {},
   "moduleExtensions": {
-    "//bun:extensions.bzl%bun": {
+    "@@rules_bun+//bun:extensions.bzl%bun": {
       "general": {
         "bzlTransitiveDigest": "64B4fTkEHdAlieIOkE/Wi2M/R9lMNZhFxeI1eXEFHRs=",
-        "usagesDigest": "/0BcCMA6AOzLhQaRK6DquxrCfpPHJUjSUaFz4zmQrsM=",
+        "usagesDigest": "NKGlTDuQz8QyvtynGiqPQZ47pqfh7gwmp164c1kruoc=",
         "recordedInputs": [
-          "REPO_MAPPING:,bazel_tools bazel_tools"
+          "REPO_MAPPING:rules_bun+,bazel_tools bazel_tools"
         ],
         "generatedRepoSpecs": {
           "bun_linux_x64": {
@@ -251,33 +251,21 @@
         }
       }
     },
-    "//bun:extensions.bzl%bun_install": {
+    "@@rules_bun+//bun:extensions.bzl%bun_install": {
       "general": {
-        "bzlTransitiveDigest": "xKWhaSNvthtzN2J8BNWSLHTqQ5ZJHwyCTQAdUQyOFXE=",
-        "usagesDigest": "d+DGTyl4FpB6Ygb/R/V5knxm9bGYZKO223wMX1Q6R6w=",
+        "bzlTransitiveDigest": "64B4fTkEHdAlieIOkE/Wi2M/R9lMNZhFxeI1eXEFHRs=",
+        "usagesDigest": "7SehYeU297FzlGHTRg/G5aakC/abC14POtOr8Qy38vA=",
         "recordedInputs": [
-          "REPO_MAPPING:,bazel_tools bazel_tools"
+          "REPO_MAPPING:rules_bun+,bazel_tools bazel_tools"
         ],
         "generatedRepoSpecs": {
-          "script_test_vite_node_modules": {
-            "repoRuleId": "@@//internal:bun_install.bzl%bun_install_repository",
+          "npm": {
+            "repoRuleId": "@@rules_bun+//internal:bun_install.bzl%bun_install_repository",
             "attributes": {
-              "package_json": "@@//tests/script_test:vite_app/package.json",
-              "bun_lockfile": "@@//tests/script_test:vite_app/bun.lock"
-            }
-          },
-          "script_test_vite_monorepo_node_modules": {
-            "repoRuleId": "@@//internal:bun_install.bzl%bun_install_repository",
-            "attributes": {
-              "package_json": "@@//tests/script_test:vite_monorepo/package.json",
-              "bun_lockfile": "@@//tests/script_test:vite_monorepo/bun.lock"
-            }
-          },
-          "examples_vite_monorepo_node_modules": {
-            "repoRuleId": "@@//internal:bun_install.bzl%bun_install_repository",
-            "attributes": {
-              "package_json": "@@//examples/vite_monorepo:package.json",
-              "bun_lockfile": "@@//examples/vite_monorepo:bun.lock"
+              "package_json": "@@//:package.json",
+              "bun_lockfile": "@@//:bun.lock",
+              "install_inputs": [],
+              "isolated_home": true
             }
           }
         }

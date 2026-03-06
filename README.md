@@ -96,6 +96,10 @@ bun_install_ext.install(
     name = "bun_deps",
     package_json = "//:package.json",
     bun_lockfile = "//:bun.lock",
+    # Optional: include extra install-time files or allow Bun to reuse the
+    # host HOME/cache.
+    # install_inputs = ["//:.npmrc"],
+    # isolated_home = False,
 )
 
 use_repo(bun_install_ext, "bun_deps")

@@ -3,7 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite"
+    "dev": "vite --port 5174"
+  },
+  "dependencies": {
+    "nanoid": "5.1.6"
   },
   "devDependencies": {
     "vite": "catalog:",

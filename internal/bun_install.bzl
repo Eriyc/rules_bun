@@ -1,5 +1,30 @@
 """Repository-rule based bun_install implementation."""
 
+_DEFAULT_INSTALL_INPUTS = [
+    ".npmrc",
+    "bunfig.json",
+    "bunfig.toml",
+]
+
+def _normalize_path(path):
+    normalized = path.replace("\\", "/")
+    if normalized.endswith("/") and normalized != "/":
+        normalized = normalized[:-1]
+    return normalized
+
+def _relative_to_root(root, child):
+    normalized_root = _normalize_path(root)
+    normalized_child = _normalize_path(child)
+
+    if normalized_child == normalized_root:
+        return ""
+
+    prefix = normalized_root + "/"
+    if not normalized_child.startswith(prefix):
+        fail("bun_install: expected install input {} to be under {}".format(child, root))
+
+    return normalized_child[len(prefix):]
+
 def _segment_matches(name, pattern):
     if pattern == "*":
         return True
@@ -87,7 +112,7 @@ def _materialize_workspace_packages(repository_ctx, package_json):
             if workspace_dir_str == package_root_str:
                 continue
 
-            relative_dir = workspace_dir_str[len(package_root_str) + 1:]
+            relative_dir = _relative_to_root(package_root_str, workspace_dir_str)
             if relative_dir in written:
                 continue
 
@@ -96,6 +121,36 @@ def _materialize_workspace_packages(repository_ctx, package_json):
                 repository_ctx.read(workspace_package_json),
             )
             written[relative_dir] = True
+
+def _materialize_install_inputs(repository_ctx, package_json):
+    package_root = package_json.dirname
+    package_root_str = str(package_root)
+    written = {}
+
+    for relative_path in _DEFAULT_INSTALL_INPUTS:
+        source_path = repository_ctx.path(str(package_root) + "/" + relative_path)
+        if source_path.exists and not source_path.is_dir:
+            repository_ctx.file(relative_path, repository_ctx.read(source_path))
+            written[relative_path] = True
+
+    for install_input in repository_ctx.attr.install_inputs:
+        source_path = repository_ctx.path(install_input)
+
+        if not source_path.exists:
+            fail("bun_install: install input not found: {}".format(install_input))
+
+        if source_path.is_dir:
+            fail("bun_install: install_inputs must be files under the package root: {}".format(install_input))
+
+        relative_path = _relative_to_root(package_root_str, str(source_path))
+        if not relative_path:
+            fail("bun_install: install input must be a file under the package root: {}".format(install_input))
+
+        if relative_path in written:
+            continue
+
+        repository_ctx.file(relative_path, repository_ctx.read(source_path))
+        written[relative_path] = True
 
 def _select_bun_binary(repository_ctx):
     os_name = repository_ctx.os.name.lower()
@@ -134,14 +189,23 @@ def _bun_install_repository_impl(repository_ctx):
 
     repository_ctx.file("package.json", repository_ctx.read(package_json))
     repository_ctx.symlink(bun_lockfile, lockfile_name)
+    _materialize_install_inputs(repository_ctx, package_json)
     _materialize_workspace_packages(repository_ctx, package_json)
 
-    result = repository_ctx.execute(
-        [str(bun_bin), "--bun", "install", "--frozen-lockfile", "--no-progress"],
-        timeout = 600,
-        quiet = False,
-        environment = {"HOME": str(repository_ctx.path("."))},
-    )
+    install_args = [str(bun_bin), "--bun", "install", "--frozen-lockfile", "--no-progress"]
+    if repository_ctx.attr.isolated_home:
+        result = repository_ctx.execute(
+            install_args,
+            timeout = 600,
+            quiet = False,
+            environment = {"HOME": str(repository_ctx.path("."))},
+        )
+    else:
+        result = repository_ctx.execute(
+            install_args,
+            timeout = 600,
+            quiet = False,
+        )
 
     if result.return_code:
         fail("""bun_install failed running `bun --bun install --frozen-lockfile`.
@@ -155,7 +219,7 @@ stderr:
         "BUILD.bazel",
         """filegroup(
     name = "node_modules",
-    srcs = glob(["node_modules/**"], allow_empty = False),
+    srcs = glob(["**/node_modules/**"], allow_empty = False),
     visibility = ["//visibility:public"],
 )
 """,
@@ -166,6 +230,8 @@ bun_install_repository = repository_rule(
     attrs = {
         "package_json": attr.label(mandatory = True, allow_single_file = True),
         "bun_lockfile": attr.label(mandatory = True, allow_single_file = True),
+        "install_inputs": attr.label_list(allow_files = True),
+        "isolated_home": attr.bool(default = True),
         "bun_linux_x64": attr.label(default = "@bun_linux_x64//:bun-linux-x64/bun", allow_single_file = True),
         "bun_linux_aarch64": attr.label(default = "@bun_linux_aarch64//:bun-linux-aarch64/bun", allow_single_file = True),
         "bun_darwin_x64": attr.label(default = "@bun_darwin_x64//:bun-darwin-x64/bun", allow_single_file = True),
@@ -174,13 +240,17 @@ bun_install_repository = repository_rule(
     },
 )
 
-def bun_install(name, package_json, bun_lockfile):
+def bun_install(name, package_json, bun_lockfile, install_inputs = [], isolated_home = True):
     """Create an external repository containing installed node_modules.
 
     Args:
       name: Repository name to create.
       package_json: Label to a package.json file.
       bun_lockfile: Label to a bun.lockb file.
+            install_inputs: Optional additional files under the package root to copy
+                into the install context, such as patch files or auth/config files.
+            isolated_home: Whether to run Bun with HOME set to the generated
+                repository root for a more isolated install context.
 
     Usage (WORKSPACE):
       bun_install(
@@ -194,4 +264,6 @@ def bun_install(name, package_json, bun_lockfile):
         name = name,
         package_json = package_json,
         bun_lockfile = bun_lockfile,
+        install_inputs = install_inputs,
+        isolated_home = isolated_home,
     )

@@ -19,30 +19,115 @@ set -euo pipefail
 
 runfiles_dir="${{RUNFILES_DIR:-$0.runfiles}}"
 workspace_root="${{runfiles_dir}}/_main"
+workspace_root="$(cd "${{workspace_root}}" && pwd -P)"
 bun_bin="${{runfiles_dir}}/_main/{bun_short_path}"
 package_json="${{runfiles_dir}}/_main/{package_json_short_path}"
-package_dir="$(dirname "${{package_json}}")"
+package_dir="$(cd "$(dirname "${{package_json}}")" && pwd -P)"
+package_rel_dir="{package_rel_dir}"
 
-node_modules_bin_dirs=()
-while IFS= read -r node_modules_bin; do
-    node_modules_bin_dirs+=("${{node_modules_bin}}")
-done < <(find "${{runfiles_dir}}" -type d -path '*/node_modules/.bin' 2>/dev/null | sort)
+select_primary_node_modules() {{
+    local selected=""
+    local fallback=""
+    while IFS= read -r node_modules_dir; do
+        if [[ -z "${{fallback}}" ]]; then
+            fallback="${{node_modules_dir}}"
+        fi
 
-if [[ ${{#node_modules_bin_dirs[@]}} -gt 0 ]]; then
-    export PATH="$(IFS=:; echo "${{node_modules_bin_dirs[*]}}"):${{PATH}}"
+        if [[ ! -d "${{node_modules_dir}}/.bun" ]]; then
+            continue
+        fi
+
+        if [[ "${{node_modules_dir}}" != *"/runfiles/_main/"* ]]; then
+            selected="${{node_modules_dir}}"
+            break
+        fi
+
+        if [[ -z "${{selected}}" ]]; then
+            selected="${{node_modules_dir}}"
+        fi
+    done < <(find -L "${{runfiles_dir}}" -type d -name node_modules 2>/dev/null | sort)
+
+    if [[ -n "${{selected}}" ]]; then
+        echo "${{selected}}"
+    else
+        echo "${{fallback}}"
+    fi
+}}
+
+primary_node_modules="$(select_primary_node_modules)"
+
+runtime_workspace="$(mktemp -d)"
+cleanup_runtime_workspace() {{
+    rm -rf "${{runtime_workspace}}"
+}}
+trap cleanup_runtime_workspace EXIT
+
+runtime_package_dir="${{runtime_workspace}}/${{package_rel_dir}}"
+mkdir -p "${{runtime_package_dir}}"
+cp -RL "${{package_dir}}/." "${{runtime_package_dir}}/"
+
+install_repo_root=""
+if [[ -n "${{primary_node_modules}}" ]]; then
+    install_repo_root="$(dirname "${{primary_node_modules}}")"
+    ln -s "${{primary_node_modules}}" "${{runtime_workspace}}/node_modules"
+fi
+
+find_node_modules() {{
+    local dir="$1"
+    local root="$2"
+
+    while [[ "$dir" == "$root"* ]]; do
+        if [[ -d "$dir/node_modules" ]]; then
+            echo "$dir/node_modules"
+            return 0
+        fi
+
+        if [[ "$dir" == "$root" ]]; then
+            break
+        fi
+
+        dir="$(dirname "$dir")"
+    done
+
+    return 1
+}}
+
+if [[ -n "${{install_repo_root}}" && -d "${{install_repo_root}}/${{package_rel_dir}}/node_modules" ]]; then
+    rm -rf "${{runtime_package_dir}}/node_modules"
+    ln -s "${{install_repo_root}}/${{package_rel_dir}}/node_modules" "${{runtime_package_dir}}/node_modules"
+else
+    resolved_node_modules="$(find_node_modules "${{runtime_package_dir}}" "${{runtime_workspace}}" || true)"
+    if [[ -n "${{resolved_node_modules}}" && "${{resolved_node_modules}}" != "${{runtime_package_dir}}/node_modules" ]]; then
+        rm -rf "${{runtime_package_dir}}/node_modules"
+        ln -s "${{resolved_node_modules}}" "${{runtime_package_dir}}/node_modules"
+    fi
+fi
+
+path_entries=()
+if [[ -d "${{runtime_package_dir}}/node_modules/.bin" ]]; then
+    path_entries+=("${{runtime_package_dir}}/node_modules/.bin")
+fi
+
+if [[ -d "${{runtime_workspace}}/node_modules/.bin" && "${{runtime_workspace}}/node_modules/.bin" != "${{runtime_package_dir}}/node_modules/.bin" ]]; then
+    path_entries+=("${{runtime_workspace}}/node_modules/.bin")
+fi
+
+if [[ ${{#path_entries[@]}} -gt 0 ]]; then
+    export PATH="$(IFS=:; echo "${{path_entries[*]}}"):${{PATH}}"
 fi
 
 working_dir="{working_dir}"
 if [[ "${{working_dir}}" == "package" ]]; then
-    cd "${{package_dir}}"
+    cd "${{runtime_package_dir}}"
 else
-    cd "${{workspace_root}}"
+    cd "${{runtime_workspace}}"
 fi
 
 exec "${{bun_bin}}" --bun run {script} "$@"
 """.format(
             bun_short_path = bun_bin.short_path,
             package_json_short_path = package_json.short_path,
+            package_rel_dir = package_json.dirname,
             working_dir = ctx.attr.working_dir,
             script = _shell_quote(ctx.attr.script),
         ),

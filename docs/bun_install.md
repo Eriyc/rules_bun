@@ -80,6 +80,38 @@ Example:
 bun_lockfile = "//:bun.lock"
 ```
 
+### `install_inputs`
+
+Optional list of additional files under the same package root to copy into the
+install repository before Bun runs.
+
+Use this for install-time config or patch files that Bun needs to see, for
+example `.npmrc`, `bunfig.toml`, or patch files referenced by your manifest.
+
+Example:
+
+```starlark
+install_inputs = [
+    "//:.npmrc",
+    "//:patches/react.patch",
+]
+```
+
+`bun_install` also copies these root-level files automatically when present:
+
+- `.npmrc`
+- `bunfig.json`
+- `bunfig.toml`
+
+### `isolated_home`
+
+Optional boolean controlling whether Bun runs with `HOME` set to the generated
+repository root.
+
+- `True` (default): more isolated install environment
+- `False`: lets Bun use the host `HOME`, which can improve repeated-install
+  performance when Bun's cache is home-scoped
+
 ## Notes
 
 - `bun_install` runs Bun, not npm.
@@ -88,3 +120,5 @@ bun_lockfile = "//:bun.lock"
   is the dependency layout Bun installs.
 - `--frozen-lockfile` is used, so the lockfile must already be in sync with
   `package.json`.
+- Additional `install_inputs` must be files under the same package root as the
+  selected `package_json`.

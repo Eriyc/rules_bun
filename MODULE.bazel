@@ -8,6 +8,7 @@ bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "bazel_skylib", version = "1.8.2")
 bazel_dep(name = "stardoc", version = "0.7.2")
+bazel_dep(name = "rules_multirun", version = "0.9.0", dev_dependency = True)
 
 # Repository-local setup for this ruleset's own tests and examples.
 bun_ext = use_extension("//bun:extensions.bzl", "bun")
@@ -21,27 +22,27 @@ use_repo(
 )
 
 # Test fixture dependency installation used by //tests/script_test.
-bun_install_ext = use_extension("//bun:extensions.bzl", "bun_install")
+bun_install_ext = use_extension("//bun:extensions.bzl", "bun_install", dev_dependency = True)
 bun_install_ext.install(
     name = "script_test_vite_node_modules",
-    package_json = "//tests/script_test:vite_app/package.json",
     bun_lockfile = "//tests/script_test:vite_app/bun.lock",
+    package_json = "//tests/script_test:vite_app/package.json",
 )
 use_repo(bun_install_ext, "script_test_vite_node_modules")
 
 bun_install_ext.install(
     name = "script_test_vite_monorepo_node_modules",
-    package_json = "//tests/script_test:vite_monorepo/package.json",
     bun_lockfile = "//tests/script_test:vite_monorepo/bun.lock",
+    package_json = "//tests/script_test:vite_monorepo/package.json",
 )
 use_repo(bun_install_ext, "script_test_vite_monorepo_node_modules")
 
 bun_install_ext.install(
     name = "examples_vite_monorepo_node_modules",
-    package_json = "//examples/vite_monorepo:package.json",
     bun_lockfile = "//examples/vite_monorepo:bun.lock",
+    package_json = "//examples/vite_monorepo:package.json",
 )
-use_repo(bun_install_ext, "examples_vite_monorepo_node_modules")
+use_repo(bun_install_ext, node_modules = "examples_vite_monorepo_node_modules")
 
 # Register the published Bun toolchains for this repository.
 register_toolchains(

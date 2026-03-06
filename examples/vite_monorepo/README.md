@@ -23,6 +23,6 @@ bazel run //examples/vite_monorepo:app_a_dev -- --host 127.0.0.1 --port 5173 --s
 bazel run //examples/vite_monorepo:app_b_dev -- --host 127.0.0.1 --port 5174 --strictPort
 ```
 
-This example relies on a `bun_install` repository named
-`examples_vite_monorepo_node_modules` defined in the repo's `MODULE.bazel` and
-`WORKSPACE` files.
+This example maps its `bun_install` output to the canonical `@node_modules`
+repository name in `MODULE.bazel`, so `bun_script` targets don't need to hard-
+code a generated repository name.

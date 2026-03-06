@@ -1,7 +1,9 @@
+import { nanoid } from "nanoid";
 const app = document.querySelector("#app");
 
 if (app) {
-  app.textContent = "Hello from monorepo app B";
+  const id = nanoid();
+  app.textContent = "Hello from monorepo app B " + id;
 }
 
 console.log("Hello from monorepo app B");
