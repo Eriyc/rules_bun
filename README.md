@@ -55,7 +55,7 @@ Release announcements should provide a copy-pasteable module snippet in the
 standard ruleset form:
 
 ```starlark
-bazel_dep(name = "rules_bun", version = "0.2.1")
+bazel_dep(name = "rules_bun", version = "0.2.2")
 ```
 
 Then add the Bun repositories and register the toolchains in `MODULE.bazel`:
