@@ -17,24 +17,24 @@ These steps show how to consume a tagged release of `rules_bun` in a separate Ba
 In your project's `MODULE.bazel`, add:
 
 ```starlark
-bazel_dep(name = "rules_bun", version = "0.1.0")
+bazel_dep(name = "rules_bun", version = "0.2.0")
 
 archive_override(
 	module_name = "rules_bun",
 	urls = ["https://github.com/Eriyc/rules_bun/archiv0.0.5.tar.gz"],
-	strip_prefix = "rules_bun-v0.1.0",
+	strip_prefix = "rules_bun-v0.2.0",
 )
 ```
 
-For channel/pre-release tags (for example `v0.1.0-rc.1`), use the matching folder prefix:
+For channel/pre-release tags (for example `v0.2.0-rc.1`), use the matching folder prefix:
 
 ```starlark
-bazel_dep(name = "rules_bun", version = "0.1.0-rc.1")
+bazel_dep(name = "rules_bun", version = "0.2.0-rc.1")
 
 archive_override(
 	module_name = "rules_bun",
 	urls = ["https://github.com/Eriyc/rules_bun/archiv0.0.5-rc.1.tar.gz"],
-	strip_prefix = "rules_bun-v0.1.0-rc.1",
+	strip_prefix = "rules_bun-v0.2.0-rc.1",
 )
 ```
 
