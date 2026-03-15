@@ -122,7 +122,7 @@
           ];
 
           checks.tests = {
-            command = "bazel test //tests/...";
+            command = "bazelisk test //tests/...";
             stage = "pre-push";
             passFilenames = false;
             runtimeInputs = [
