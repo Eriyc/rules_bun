@@ -8,7 +8,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 source "${script_dir}/../nested_bazel_test.sh"
 setup_nested_bazel_cmd
 
-rules_bun_root="$(cd "${script_dir}/../.." && pwd -P)"
+rules_bun_root="$(find_nested_bazel_workspace_root "${BASH_SOURCE[0]}")"
 
 workdir="$(mktemp -d)"
 cleanup() {

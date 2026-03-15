@@ -8,7 +8,7 @@ setup_nested_bazel_cmd
 
 bun_path="$1"
 
-rules_bun_root="$(cd "${script_dir}/../.." && pwd -P)"
+rules_bun_root="$(find_nested_bazel_workspace_root "${BASH_SOURCE[0]}")"
 
 workdir="$(mktemp -d)"
 cleanup() {
