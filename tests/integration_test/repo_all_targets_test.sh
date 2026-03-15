@@ -3,6 +3,17 @@ set -euo pipefail
 
 workflow_file="$1"
 
-grep -Fq './tests/ci_test/phase8_ci_targets.sh "${{ matrix.phase8_target }}"' "${workflow_file}"
-grep -Fq 'targets="$(./tests/ci_test/phase8_ci_targets.sh "${{ matrix.phase8_target }}")"' "${workflow_file}"
-grep -Fq 'bazel test --test_output=errors ${targets}' "${workflow_file}"
+assert_contains() {
+  local expected="$1"
+
+  if ! grep -Fq "${expected}" "${workflow_file}"; then
+    echo "Error: expected workflow snippet not found:" >&2
+    printf '  %s\n' "${expected}" >&2
+    exit 1
+  fi
+}
+
+assert_contains './tests/ci_test/phase8_ci_targets.sh "${{ matrix.phase8_target }}"'
+assert_contains 'mapfile -t targets < <(./tests/ci_test/phase8_ci_targets.sh "${{ matrix.phase8_target }}")'
+assert_contains 'nix develop --accept-flake-config -c bazel test --test_output=errors "${targets[@]}"'
+assert_contains 'bazel test --test_output=errors "${targets[@]}"'
