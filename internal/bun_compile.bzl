@@ -1,18 +1,34 @@
 """Rules for Bun build outputs and standalone executables."""
 
-load("//internal:bun_build_support.bzl", "add_bun_build_common_flags", "add_bun_compile_flags", "bun_build_transitive_inputs")
+load("//internal:bun_build_support.bzl", "add_bun_build_common_flags", "add_bun_compile_flags", "bun_build_transitive_inputs", "infer_entry_point_root")
 
 def _bun_build_impl(ctx):
     toolchain = ctx.toolchains["//bun:toolchain_type"]
     bun_bin = toolchain.bun.bun_bin
     output_dir = ctx.actions.declare_directory(ctx.label.name)
-    metafile = ctx.actions.declare_file(ctx.label.name + ".meta.json") if ctx.attr.metafile else None
-    metafile_md = ctx.actions.declare_file(ctx.label.name + ".meta.md") if ctx.attr.metafile_md else None
+    metafile = None
+    if ctx.attr.metafile:
+        metafile = ctx.actions.declare_file(ctx.label.name + ".meta.json")
+    metafile_md = None
+    if ctx.attr.metafile_md:
+        metafile_md = ctx.actions.declare_file(ctx.label.name + ".meta.md")
+    build_root = ctx.attr.root
+    if not build_root:
+        build_root = infer_entry_point_root(ctx.files.entry_points)
+    transitive_inputs = bun_build_transitive_inputs(ctx)
+    build_inputs = depset(
+        direct = ctx.files.entry_points + ctx.files.data,
+        transitive = transitive_inputs,
+    )
+    input_manifest = ctx.actions.declare_file(ctx.label.name + ".inputs")
+    runner = ctx.actions.declare_file(ctx.label.name + "_runner.sh")
 
     args = ctx.actions.args()
+    args.add(input_manifest.path)
+    args.add(bun_bin.path)
     args.add("--bun")
     args.add("build")
-    add_bun_build_common_flags(args, ctx.attr, metafile = metafile, metafile_md = metafile_md)
+    add_bun_build_common_flags(args, ctx.attr, metafile = metafile, metafile_md = metafile_md, root = build_root)
     args.add("--outdir")
     args.add(output_dir.path)
     args.add_all(ctx.files.entry_points)
@@ -23,12 +39,74 @@ def _bun_build_impl(ctx):
     if metafile_md:
         outputs.append(metafile_md)
 
+    ctx.actions.write(
+        output = input_manifest,
+        content = "".join([file.path + "\n" for file in build_inputs.to_list()]),
+    )
+
+    ctx.actions.write(
+        output = runner,
+        is_executable = True,
+        content = """#!/usr/bin/env bash
+set -euo pipefail
+
+manifest="$1"
+execroot="$(pwd -P)"
+bun_bin="$2"
+if [[ "${bun_bin}" != /* ]]; then
+  bun_bin="${execroot}/${bun_bin}"
+fi
+shift 2
+
+stage_dir="$(mktemp -d "${TMPDIR:-/tmp}/rules_bun_build.XXXXXX")"
+cleanup() {
+  rm -rf "${stage_dir}"
+}
+trap cleanup EXIT
+
+while IFS= read -r relpath; do
+  if [[ -z "${relpath}" ]]; then
+    continue
+  fi
+  src="${execroot}/${relpath}"
+  dest="${stage_dir}/${relpath}"
+  mkdir -p "$(dirname "${dest}")"
+  cp -L "${src}" "${dest}"
+done < "${manifest}"
+
+forwarded_args=()
+while (($#)); do
+  case "$1" in
+    --outdir)
+      forwarded_args+=("$1" "${execroot}/$2")
+      shift 2
+      ;;
+    --metafile=*)
+      forwarded_args+=("--metafile=${execroot}/${1#--metafile=}")
+      shift
+      ;;
+    --metafile-md=*)
+      forwarded_args+=("--metafile-md=${execroot}/${1#--metafile-md=}")
+      shift
+      ;;
+    *)
+      forwarded_args+=("$1")
+      shift
+      ;;
+  esac
+done
+
+cd "${stage_dir}"
+exec "${bun_bin}" "${forwarded_args[@]}"
+""",
+    )
+
     ctx.actions.run(
-        executable = bun_bin,
+        executable = runner,
         arguments = [args],
         inputs = depset(
-            direct = ctx.files.entry_points + ctx.files.data,
-            transitive = bun_build_transitive_inputs(ctx),
+            direct = [input_manifest, bun_bin],
+            transitive = [build_inputs],
         ),
         outputs = outputs,
         mnemonic = "BunBuild",

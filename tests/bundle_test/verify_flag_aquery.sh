@@ -132,6 +132,14 @@ for expected in \
   expect_line "${build_output}" "${expected}"
 done
 
+default_root_output="$(run_aquery "BunBuild" "//tests/bundle_test:site_build_with_meta")"
+
+for expected in \
+  'arguments: "--root"' \
+  'arguments: "tests/bundle_test/site"'; do
+  expect_line "${default_root_output}" "${expected}"
+done
+
 compile_output="$(run_aquery "BunCompile" "//tests/bundle_test:compiled_cli_with_flags")"
 
 for expected in \

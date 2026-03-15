@@ -225,7 +225,9 @@ bun_compile(
 
 `bun_build` exposes a directory output so Bun can emit HTML, CSS, assets, and
 split chunks. `bun_compile` produces a single executable artifact and supports
-explicit cross-compilation via `compile_executable`.
+explicit cross-compilation via `compile_executable`. When `root` is omitted,
+`bun_build` derives a stable default from the entry point parent directory so
+HTML and asset output stays inside Bazel's declared output tree.
 
 ### `bun_dev` for local development
 

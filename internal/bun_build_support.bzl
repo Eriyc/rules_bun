@@ -3,6 +3,26 @@
 load("//internal:bun_command.bzl", "add_flag", "add_flag_value", "add_flag_values", "add_install_mode", "add_raw_flags")
 load("//internal:js_library.bzl", "collect_js_sources")
 
+def infer_entry_point_root(entries):
+    if not entries:
+        return None
+
+    common_segments = entries[0].path.split("/")[:-1]
+    for entry in entries[1:]:
+        entry_segments = entry.path.split("/")[:-1]
+        common_length = min(len(common_segments), len(entry_segments))
+        idx = common_length
+        for segment_idx in range(common_length):
+            if common_segments[segment_idx] != entry_segments[segment_idx]:
+                idx = segment_idx
+                break
+        common_segments = common_segments[:idx]
+
+    if not common_segments:
+        return "."
+
+    return "/".join(common_segments)
+
 def bun_build_transitive_inputs(ctx):
     transitive_inputs = []
     if getattr(ctx.attr, "node_modules", None):
@@ -11,13 +31,17 @@ def bun_build_transitive_inputs(ctx):
         transitive_inputs.append(collect_js_sources(dep))
     return transitive_inputs
 
-def add_bun_build_common_flags(args, attr, metafile = None, metafile_md = None):
+def add_bun_build_common_flags(args, attr, metafile = None, metafile_md = None, root = None):
+    build_root = root
+    if build_root == None:
+        build_root = getattr(attr, "root", None)
+
     add_install_mode(args, getattr(attr, "install_mode", "disable"))
     add_flag_value(args, "--target", getattr(attr, "target", None))
     add_flag_value(args, "--format", getattr(attr, "format", None))
     add_flag(args, "--production", getattr(attr, "production", False))
     add_flag(args, "--splitting", getattr(attr, "splitting", False))
-    add_flag_value(args, "--root", getattr(attr, "root", None))
+    add_flag_value(args, "--root", build_root)
 
     sourcemap = getattr(attr, "sourcemap", None)
     if sourcemap == True:

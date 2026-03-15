@@ -102,7 +102,7 @@ may be requested with `metafile` and `metafile_md`.
 | <a id="bun_build-production"></a>production |  If true, sets `NODE_ENV=production` and enables Bun production mode.   | Boolean | optional |  `False`  |
 | <a id="bun_build-public_path"></a>public_path |  Optional public path prefix for emitted imports.   | String | optional |  `""`  |
 | <a id="bun_build-react_fast_refresh"></a>react_fast_refresh |  If true, enables Bun's React fast refresh transform.   | Boolean | optional |  `False`  |
-| <a id="bun_build-root"></a>root |  Optional root directory for multiple entry points.   | String | optional |  `""`  |
+| <a id="bun_build-root"></a>root |  Optional root directory for multiple entry points. When omitted, `bun_build` derives one from the entry point parent directories to keep emitted files inside the declared output tree.   | String | optional |  `""`  |
 | <a id="bun_build-sourcemap"></a>sourcemap |  Sourcemap emission mode.   | String | optional |  `"none"`  |
 | <a id="bun_build-splitting"></a>splitting |  If true, enables code splitting.   | Boolean | optional |  `False`  |
 | <a id="bun_build-target"></a>target |  Bun build target environment.   | String | optional |  `"browser"`  |
@@ -480,5 +480,4 @@ js_test(<a href="#js_test-name">name</a>, <a href="#js_test-entry_point">entry_p
 | <a id="js_test-entry_point"></a>entry_point |  <p align="center"> - </p>   |  `None` |
 | <a id="js_test-srcs"></a>srcs |  <p align="center"> - </p>   |  `None` |
 | <a id="js_test-kwargs"></a>kwargs |  <p align="center"> - </p>   |  none |
-
 
