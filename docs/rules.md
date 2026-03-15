@@ -2,6 +2,18 @@
 
 Public API surface for Bun Bazel rules.
 
+## Hermeticity And Determinism
+
+- Hermetic rule surfaces: `bun_build`, `bun_bundle`, `bun_compile`, `bun_test`
+- Runfiles-only executable surface: `bun_binary`
+- Reproducible but non-hermetic repository surface: `bun_install`
+- Local workflow helpers: `bun_script`, `bun_dev`, `js_run_devserver`
+
+Strict defaults:
+
+- `bun_build`, `bun_bundle`, `bun_compile`, and `bun_test` require `install_mode = "disable"`
+- Runtime launchers do not inherit the host `PATH` unless `inherit_host_path = True`
+
 <a id="bun_binary"></a>
 
 ## bun_binary
@@ -28,7 +40,8 @@ Use this rule for non-test scripts and CLIs that should run via `bazel run`.
 | <a id="bun_binary-conditions"></a>conditions |  Custom package resolve conditions passed to Bun.   | List of strings | optional |  `[]`  |
 | <a id="bun_binary-entry_point"></a>entry_point |  Path to the main JS/TS file to execute.   | <a href="https://bazel.build/concepts/labels">Label</a> | required |  |
 | <a id="bun_binary-env_files"></a>env_files |  Additional environment files loaded with `--env-file`.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
-| <a id="bun_binary-install_mode"></a>install_mode |  Whether Bun may auto-install missing packages at runtime.   | String | optional |  `"disable"`  |
+| <a id="bun_binary-install_mode"></a>install_mode |  Whether Bun may auto-install missing packages at runtime. Non-`disable` values are runtime opt-ins and are not hermetic.   | String | optional |  `"disable"`  |
+| <a id="bun_binary-inherit_host_path"></a>inherit_host_path |  If true, appends the host PATH after staged `node_modules/.bin` entries at runtime.   | Boolean | optional |  `False`  |
 | <a id="bun_binary-no_env_file"></a>no_env_file |  If true, disables Bun's automatic `.env` loading.   | Boolean | optional |  `False`  |
 | <a id="bun_binary-node_modules"></a>node_modules |  Optional label providing package files from a `node_modules` tree, typically produced by `bun_install`, in runfiles.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 | <a id="bun_binary-preload"></a>preload |  Modules to preload with `--preload` before running the entry point.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
@@ -82,7 +95,7 @@ may be requested with `metafile` and `metafile_md`.
 | <a id="bun_build-feature"></a>feature |  Repeated `--feature` values for dead-code elimination.   | List of strings | optional |  `[]`  |
 | <a id="bun_build-footer"></a>footer |  Optional bundle footer text.   | String | optional |  `""`  |
 | <a id="bun_build-format"></a>format |  Output module format.   | String | optional |  `"esm"`  |
-| <a id="bun_build-install_mode"></a>install_mode |  Whether Bun may auto-install missing packages while executing the build.   | String | optional |  `"disable"`  |
+| <a id="bun_build-install_mode"></a>install_mode |  Whether Bun may auto-install missing packages while executing the build. Hermetic builds require `\"disable\"`, and other values are rejected.   | String | optional |  `"disable"`  |
 | <a id="bun_build-jsx_factory"></a>jsx_factory |  Optional JSX factory override.   | String | optional |  `""`  |
 | <a id="bun_build-jsx_fragment"></a>jsx_fragment |  Optional JSX fragment override.   | String | optional |  `""`  |
 | <a id="bun_build-jsx_import_source"></a>jsx_import_source |  Optional JSX import source override.   | String | optional |  `""`  |
@@ -135,7 +148,7 @@ Each entry point produces one output JavaScript artifact.
 | <a id="bun_bundle-entry_points"></a>entry_points |  Entry files to bundle.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | required |  |
 | <a id="bun_bundle-external"></a>external |  Package names to treat as externals (not bundled).   | List of strings | optional |  `[]`  |
 | <a id="bun_bundle-format"></a>format |  Output module format.   | String | optional |  `"esm"`  |
-| <a id="bun_bundle-install_mode"></a>install_mode |  Whether Bun may auto-install missing packages during bundling.   | String | optional |  `"disable"`  |
+| <a id="bun_bundle-install_mode"></a>install_mode |  Whether Bun may auto-install missing packages during bundling. Hermetic bundles require `\"disable\"`, and other values are rejected.   | String | optional |  `"disable"`  |
 | <a id="bun_bundle-minify"></a>minify |  If true, minifies bundle output.   | Boolean | optional |  `False`  |
 | <a id="bun_bundle-node_modules"></a>node_modules |  Optional label providing package files from a `node_modules` tree, typically produced by `bun_install`, for package resolution.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 | <a id="bun_bundle-sourcemap"></a>sourcemap |  If true, emits source maps.   | Boolean | optional |  `False`  |
@@ -194,7 +207,7 @@ Compiles a Bun program into a standalone executable with `bun build --compile`.
 | <a id="bun_compile-feature"></a>feature |  Repeated `--feature` values for dead-code elimination.   | List of strings | optional |  `[]`  |
 | <a id="bun_compile-footer"></a>footer |  Optional bundle footer text.   | String | optional |  `""`  |
 | <a id="bun_compile-format"></a>format |  Output module format.   | String | optional |  `"esm"`  |
-| <a id="bun_compile-install_mode"></a>install_mode |  Whether Bun may auto-install missing packages while executing the build.   | String | optional |  `"disable"`  |
+| <a id="bun_compile-install_mode"></a>install_mode |  Whether Bun may auto-install missing packages while executing the build. Hermetic compile actions require `\"disable\"`, and other values are rejected.   | String | optional |  `"disable"`  |
 | <a id="bun_compile-jsx_factory"></a>jsx_factory |  Optional JSX factory override.   | String | optional |  `""`  |
 | <a id="bun_compile-jsx_fragment"></a>jsx_fragment |  Optional JSX fragment override.   | String | optional |  `""`  |
 | <a id="bun_compile-jsx_import_source"></a>jsx_import_source |  Optional JSX import source override.   | String | optional |  `""`  |
@@ -251,7 +264,8 @@ watch/HMR plus optional full restarts on selected file changes.
 | <a id="bun_dev-conditions"></a>conditions |  Custom package resolve conditions passed to Bun.   | List of strings | optional |  `[]`  |
 | <a id="bun_dev-entry_point"></a>entry_point |  Path to the main JS/TS file to execute in dev mode.   | <a href="https://bazel.build/concepts/labels">Label</a> | required |  |
 | <a id="bun_dev-env_files"></a>env_files |  Additional environment files loaded with `--env-file`.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
-| <a id="bun_dev-install_mode"></a>install_mode |  Whether Bun may auto-install missing packages in dev mode.   | String | optional |  `"disable"`  |
+| <a id="bun_dev-install_mode"></a>install_mode |  Whether Bun may auto-install missing packages in dev mode. This is a local workflow helper, not a hermetic execution surface.   | String | optional |  `"disable"`  |
+| <a id="bun_dev-inherit_host_path"></a>inherit_host_path |  If true, appends the host PATH after staged `node_modules/.bin` entries at runtime.   | Boolean | optional |  `False`  |
 | <a id="bun_dev-no_clear_screen"></a>no_clear_screen |  If true, disables terminal clearing on Bun reloads.   | Boolean | optional |  `False`  |
 | <a id="bun_dev-no_env_file"></a>no_env_file |  If true, disables Bun's automatic `.env` loading.   | Boolean | optional |  `False`  |
 | <a id="bun_dev-node_modules"></a>node_modules |  Optional label providing package files from a `node_modules` tree, typically produced by `bun_install`, in runfiles.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
@@ -294,7 +308,8 @@ declared in `package.json` and expect to run from the package directory with
 | <a id="bun_script-env_files"></a>env_files |  Additional environment files loaded with `--env-file`.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
 | <a id="bun_script-execution_mode"></a>execution_mode |  How Bun should execute matching workspace scripts.   | String | optional |  `"single"`  |
 | <a id="bun_script-filters"></a>filters |  Workspace package filters passed via repeated `--filter` flags.   | List of strings | optional |  `[]`  |
-| <a id="bun_script-install_mode"></a>install_mode |  Whether Bun may auto-install missing packages while running the script.   | String | optional |  `"disable"`  |
+| <a id="bun_script-install_mode"></a>install_mode |  Whether Bun may auto-install missing packages while running the script. This is a local workflow helper, not a hermetic execution surface.   | String | optional |  `"disable"`  |
+| <a id="bun_script-inherit_host_path"></a>inherit_host_path |  If true, appends the host PATH after staged `node_modules/.bin` entries at runtime.   | Boolean | optional |  `False`  |
 | <a id="bun_script-no_env_file"></a>no_env_file |  If true, disables Bun's automatic `.env` loading.   | Boolean | optional |  `False`  |
 | <a id="bun_script-no_exit_on_error"></a>no_exit_on_error |  If true, Bun keeps running other workspace scripts when one fails.   | Boolean | optional |  `False`  |
 | <a id="bun_script-node_modules"></a>node_modules |  Optional label providing package files from a `node_modules` tree, typically produced by `bun_install`, in runfiles. Executables from `node_modules/.bin` are added to `PATH`, which is useful for scripts such as `vite`.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
@@ -340,7 +355,8 @@ Supports Bazel test filtering (`--test_filter`) and coverage integration.
 | <a id="bun_test-coverage"></a>coverage |  If true, always enables Bun coverage output.   | Boolean | optional |  `False`  |
 | <a id="bun_test-coverage_reporters"></a>coverage_reporters |  Repeated Bun coverage reporters such as `text` or `lcov`.   | List of strings | optional |  `[]`  |
 | <a id="bun_test-env_files"></a>env_files |  Additional environment files loaded with `--env-file`.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
-| <a id="bun_test-install_mode"></a>install_mode |  Whether Bun may auto-install missing packages while testing.   | String | optional |  `"disable"`  |
+| <a id="bun_test-install_mode"></a>install_mode |  Whether Bun may auto-install missing packages while testing. Hermetic tests require `\"disable\"`, and other values are rejected.   | String | optional |  `"disable"`  |
+| <a id="bun_test-inherit_host_path"></a>inherit_host_path |  If true, appends the host PATH after staged `node_modules/.bin` entries at runtime.   | Boolean | optional |  `False`  |
 | <a id="bun_test-max_concurrency"></a>max_concurrency |  Optional maximum number of concurrent tests.   | Integer | optional |  `0`  |
 | <a id="bun_test-no_env_file"></a>no_env_file |  If true, disables Bun's automatic `.env` loading.   | Boolean | optional |  `False`  |
 | <a id="bun_test-node_modules"></a>node_modules |  Optional label providing package files from a `node_modules` tree, typically produced by `bun_install`, in runfiles.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
@@ -411,6 +427,7 @@ the provided tool with any default arguments.
 | <a id="js_run_devserver-package_dir_hint"></a>package_dir_hint |  Optional package-relative directory hint when package_json is not supplied.   | String | optional |  `"."`  |
 | <a id="js_run_devserver-package_json"></a>package_json |  Optional package.json used to resolve the package working directory.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 | <a id="js_run_devserver-tool"></a>tool |  Executable target to launch as the dev server.   | <a href="https://bazel.build/concepts/labels">Label</a> | required |  |
+| <a id="js_run_devserver-inherit_host_path"></a>inherit_host_path |  If true, appends the host PATH after staged `node_modules/.bin` entries at runtime.   | Boolean | optional |  `False`  |
 | <a id="js_run_devserver-working_dir"></a>working_dir |  Working directory at runtime: Bazel runfiles workspace root or the resolved package directory.   | String | optional |  `"workspace"`  |
 
 
@@ -480,4 +497,3 @@ js_test(<a href="#js_test-name">name</a>, <a href="#js_test-entry_point">entry_p
 | <a id="js_test-entry_point"></a>entry_point |  <p align="center"> - </p>   |  `None` |
 | <a id="js_test-srcs"></a>srcs |  <p align="center"> - </p>   |  `None` |
 | <a id="js_test-kwargs"></a>kwargs |  <p align="center"> - </p>   |  none |
-

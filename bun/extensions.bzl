@@ -81,7 +81,7 @@ _install = tag_class(
         "omit": attr.string_list(),
         "linker": attr.string(),
         "backend": attr.string(),
-        "ignore_scripts": attr.bool(default = False),
+        "ignore_scripts": attr.bool(default = True),
         "install_flags": attr.string_list(),
     },
 )

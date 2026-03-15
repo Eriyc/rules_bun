@@ -24,6 +24,10 @@ This repository follows the standard Bazel ruleset layout:
 
 The public entrypoint for rule authors and users is `@rules_bun//bun:defs.bzl`.
 
+Runtime launcher targets from `bun_binary`, `bun_script`, `bun_test`,
+`bun_dev`, and `js_run_devserver` use native platform wrappers. Windows runtime
+support is native and does not require Git Bash or MSYS.
+
 ## Public API
 
 `rules_bun` exports these primary rules:
@@ -47,6 +51,22 @@ Reference documentation:
 - Generated build rule reference: [docs/rules.md](docs/rules.md)
 - `bun_install` extension docs: [docs/bun_install.md](docs/bun_install.md)
 - Docs index: [docs/index.md](docs/index.md)
+
+## Hermeticity
+
+`rules_bun` now draws a sharp line between hermetic rule surfaces and local
+workflow helpers.
+
+- Hermetic build/test surfaces: `bun_build`, `bun_bundle`, `bun_compile`, `bun_test`
+- Runfiles-only executable surface: `bun_binary`
+- Reproducible but non-hermetic repository fetch surface: `bun_install`
+- Local workflow helpers: `bun_script`, `bun_dev`, `js_run_devserver`
+
+Strict defaults are enabled by default:
+
+- `bun_install` skips lifecycle scripts unless `ignore_scripts = False`
+- `bun_build`, `bun_bundle`, `bun_compile`, and `bun_test` require `install_mode = "disable"`
+- Runtime launchers do not inherit the host `PATH` unless `inherit_host_path = True`
 
 To refresh generated rule docs:
 
@@ -104,9 +124,10 @@ bun_install_ext.install(
     name = "bun_deps",
     package_json = "//:package.json",
     bun_lockfile = "//:bun.lock",
-    # Optional: include extra install-time files or allow Bun to reuse the
-    # host HOME/cache.
+    # Optional: include extra install-time files.
     # install_inputs = ["//:.npmrc"],
+    # Optional non-hermetic opt-in:
+    # ignore_scripts = False,
     # isolated_home = False,
 )
 
@@ -198,8 +219,9 @@ bun_script(
 ```
 
 When `node_modules` is provided, executables from `node_modules/.bin` are added
-to `PATH`. This label typically comes from `bun_install`, which still produces a
-standard `node_modules/` directory.
+to the runtime `PATH`. The host `PATH` is not inherited unless
+`inherit_host_path = True`. This label typically comes from `bun_install`,
+which still produces a standard `node_modules/` directory.
 
 ### `bun_build` and `bun_compile`
 

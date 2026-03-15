@@ -3,17 +3,18 @@ load("@rules_shell//shell:sh_test.bzl", "sh_test")
 test_suite(
     name = "examples_test",
     tests = [
-        ":examples_basic_run_e2e_test",
         ":examples_basic_hot_restart_shape_test",
-        ":examples_workspace_bundle_e2e_test",
-        ":examples_workspace_catalog_shape_test",
+        ":examples_basic_run_e2e_test",
         ":examples_vite_monorepo_catalog_shape_test",
         ":examples_vite_monorepo_e2e_test",
+        ":examples_workspace_bundle_e2e_test",
+        ":examples_workspace_catalog_shape_test",
     ],
 )
 
 sh_test(
     name = "examples_basic_e2e_build_test",
+    size = "small",
     srcs = ["examples_basic_e2e_build_test.sh"],
     args = [
         "$(location //examples/basic:BUILD.bazel)",
@@ -27,6 +28,7 @@ sh_test(
 
 sh_test(
     name = "examples_basic_run_e2e_test",
+    size = "small",
     srcs = ["examples_basic_run_e2e_test.sh"],
     args = ["$(location //examples/basic:web_dev)"],
     data = ["//examples/basic:web_dev"],
@@ -34,6 +36,7 @@ sh_test(
 
 sh_test(
     name = "examples_basic_hot_restart_shape_test",
+    size = "small",
     srcs = ["examples_basic_hot_restart_shape_test.sh"],
     args = ["$(location //examples/basic:web_dev_hot_restart)"],
     data = ["//examples/basic:web_dev_hot_restart"],
@@ -41,6 +44,7 @@ sh_test(
 
 sh_test(
     name = "examples_workspace_bundle_e2e_test",
+    size = "small",
     srcs = ["examples_workspace_bundle_e2e_test.sh"],
     args = ["$(location //examples/workspace:pkg_b_bundle)"],
     data = ["//examples/workspace:pkg_b_bundle"],
@@ -48,6 +52,7 @@ sh_test(
 
 sh_test(
     name = "examples_workspace_catalog_shape_test",
+    size = "small",
     srcs = ["examples_workspace_catalog_shape_test.sh"],
     args = [
         "$(location //examples/workspace:package.json)",
@@ -63,6 +68,7 @@ sh_test(
 
 sh_test(
     name = "examples_vite_monorepo_catalog_shape_test",
+    size = "small",
     srcs = ["examples_vite_monorepo_catalog_shape_test.sh"],
     args = [
         "$(location //examples/vite_monorepo:package.json)",
@@ -70,14 +76,15 @@ sh_test(
         "$(location //examples/vite_monorepo:apps/app-b/package.json)",
     ],
     data = [
-        "//examples/vite_monorepo:package.json",
         "//examples/vite_monorepo:apps/app-a/package.json",
         "//examples/vite_monorepo:apps/app-b/package.json",
+        "//examples/vite_monorepo:package.json",
     ],
 )
 
 sh_test(
     name = "examples_vite_monorepo_e2e_test",
+    size = "small",
     srcs = ["examples_vite_monorepo_e2e_test.sh"],
     args = [
         "$(location //examples/vite_monorepo:app_a_dev)",
@@ -91,6 +98,7 @@ sh_test(
 
 sh_test(
     name = "repo_all_targets_test",
+    size = "small",
     srcs = ["repo_all_targets_test.sh"],
     args = ["$(location //.github/workflows:ci.yml)"],
     data = ["//.github/workflows:ci.yml"],

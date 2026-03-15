@@ -1,21 +1,30 @@
 """Rule for bundling JS/TS sources with Bun."""
 
-load("//internal:bun_build_support.bzl", "add_bun_build_common_flags", "bun_build_transitive_inputs")
+load("//internal:bun_build_support.bzl", "add_bun_build_common_flags", "bun_build_transitive_inputs", "declare_staged_bun_build_action", "sort_files_by_short_path", "validate_hermetic_install_mode")
 
 
 def _output_name(target_name, entry):
-    stem = entry.basename.rsplit(".", 1)[0]
-    return "{}__{}.js".format(target_name, stem)
+    stem = entry.short_path.rsplit(".", 1)[0]
+    sanitized = stem.replace("\\", "_").replace("/", "_").replace("-", "_").replace(".", "_").replace("@", "at_")
+    sanitized = sanitized.replace("__", "_").replace("__", "_").replace("__", "_")
+    sanitized = sanitized.strip("_")
+    if not sanitized:
+        sanitized = entry.basename.rsplit(".", 1)[0]
+    return "{}__{}.js".format(target_name, sanitized)
 
 
 def _bun_bundle_impl(ctx):
+    validate_hermetic_install_mode(ctx.attr, "bun_bundle")
+
     toolchain = ctx.toolchains["//bun:toolchain_type"]
     bun_bin = toolchain.bun.bun_bin
+    entry_points = sort_files_by_short_path(ctx.files.entry_points)
+    data_files = sort_files_by_short_path(ctx.files.data)
 
     transitive_inputs = bun_build_transitive_inputs(ctx)
 
     outputs = []
-    for entry in ctx.files.entry_points:
+    for entry in entry_points:
         output = ctx.actions.declare_file(_output_name(ctx.label.name, entry))
         outputs.append(output)
 
@@ -27,16 +36,18 @@ def _bun_bundle_impl(ctx):
         args.add(output.path)
         args.add(entry.path)
 
-        ctx.actions.run(
-            executable = bun_bin,
-            arguments = [args],
-            inputs = depset(
-                direct = [entry] + ctx.files.data,
+        declare_staged_bun_build_action(
+            ctx,
+            bun_bin,
+            args,
+            depset(
+                direct = [entry] + data_files,
                 transitive = transitive_inputs,
             ),
             outputs = [output],
             mnemonic = "BunBundle",
             progress_message = "Bundling {} with Bun".format(entry.short_path),
+            name_suffix = "_bundle_{}".format(output.basename.rsplit(".", 1)[0]),
         )
 
     return [DefaultInfo(files = depset(outputs))]
@@ -67,7 +78,7 @@ Each entry point produces one output JavaScript artifact.
         "install_mode": attr.string(
             default = "disable",
             values = ["disable", "auto", "fallback", "force"],
-            doc = "Whether Bun may auto-install missing packages during bundling.",
+            doc = "Whether Bun may auto-install missing packages during bundling. Hermetic bundle actions require `disable`; other values are rejected.",
         ),
         "target": attr.string(
             default = "browser",

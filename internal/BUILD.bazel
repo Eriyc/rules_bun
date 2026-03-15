@@ -15,6 +15,8 @@ exports_files([
     "js_compat.bzl",
     "js_library.bzl",
     "js_run_devserver.bzl",
+    "runtime_launcher.bzl",
+    "runtime_launcher.js",
     "workspace.bzl",
 ])
 
@@ -34,6 +36,8 @@ filegroup(
         "js_compat.bzl",
         "js_library.bzl",
         "js_run_devserver.bzl",
+        "runtime_launcher.bzl",
+        "runtime_launcher.js",
         "workspace.bzl",
     ],
     visibility = ["//visibility:public"],
@@ -59,6 +63,7 @@ bzl_library(
     deps = [
         ":bun_command_bzl",
         ":js_library_bzl",
+        ":runtime_launcher_bzl",
         ":workspace_bzl",
     ],
 )
@@ -84,6 +89,7 @@ bzl_library(
     srcs = ["bun_dev.bzl"],
     deps = [
         ":bun_command_bzl",
+        ":runtime_launcher_bzl",
         ":workspace_bzl",
     ],
 )
@@ -98,6 +104,7 @@ bzl_library(
     srcs = ["bun_script.bzl"],
     deps = [
         ":bun_command_bzl",
+        ":runtime_launcher_bzl",
         ":workspace_bzl",
     ],
 )
@@ -108,6 +115,7 @@ bzl_library(
     deps = [
         ":bun_command_bzl",
         ":js_library_bzl",
+        ":runtime_launcher_bzl",
         ":workspace_bzl",
     ],
 )
@@ -133,8 +141,14 @@ bzl_library(
     srcs = ["js_run_devserver.bzl"],
     deps = [
         ":js_library_bzl",
+        ":runtime_launcher_bzl",
         ":workspace_bzl",
     ],
+)
+
+bzl_library(
+    name = "runtime_launcher_bzl",
+    srcs = ["runtime_launcher.bzl"],
 )
 
 bzl_library(

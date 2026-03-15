@@ -3,6 +3,74 @@
 load("//internal:bun_command.bzl", "add_flag", "add_flag_value", "add_flag_values", "add_install_mode", "add_raw_flags")
 load("//internal:js_library.bzl", "collect_js_sources")
 
+_STAGED_BUILD_RUNNER = """import { spawnSync } from "node:child_process";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, resolve } from "node:path";
+
+const [, , manifestPath, ...buildArgs] = process.argv;
+const execroot = process.cwd();
+const stageDir = mkdtempSync(resolve(tmpdir(), "rules_bun_build-"));
+
+function rewriteArgPath(flag, value) {
+  return `${flag}=${resolve(execroot, value)}`;
+}
+
+try {
+  for (const relpath of readFileSync(manifestPath, "utf8").split(/\\r?\\n/)) {
+    if (!relpath) {
+      continue;
+    }
+    const src = resolve(execroot, relpath);
+    const dest = resolve(stageDir, relpath);
+    mkdirSync(dirname(dest), { recursive: true });
+    cpSync(src, dest, { dereference: true, force: true, recursive: true });
+  }
+
+  const forwardedArgs = [];
+  for (let index = 0; index < buildArgs.length; index += 1) {
+    const arg = buildArgs[index];
+    if ((arg === "--outdir" || arg === "--outfile") && index + 1 < buildArgs.length) {
+      forwardedArgs.push(arg, resolve(execroot, buildArgs[index + 1]));
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith("--metafile=")) {
+      forwardedArgs.push(rewriteArgPath("--metafile", arg.slice("--metafile=".length)));
+      continue;
+    }
+    if (arg.startsWith("--metafile-md=")) {
+      forwardedArgs.push(rewriteArgPath("--metafile-md", arg.slice("--metafile-md=".length)));
+      continue;
+    }
+    forwardedArgs.push(arg);
+  }
+
+  const result = spawnSync(process.execPath, forwardedArgs, {
+    cwd: stageDir,
+    stdio: "inherit",
+  });
+  if (result.error) {
+    throw result.error;
+  }
+  process.exit(typeof result.status === "number" ? result.status : 1);
+} finally {
+  rmSync(stageDir, { recursive: true, force: true });
+}
+"""
+
+def sort_files_by_short_path(files):
+    files_by_path = {}
+    short_paths = []
+    for file in files:
+        files_by_path[file.short_path] = file
+        short_paths.append(file.short_path)
+    return [files_by_path[short_path] for short_path in sorted(short_paths)]
+
+def validate_hermetic_install_mode(attr, rule_name):
+    if getattr(attr, "install_mode", "disable") != "disable":
+        fail("{} requires install_mode = \"disable\" for hermetic execution".format(rule_name))
+
 def infer_entry_point_root(entries):
     if not entries:
         return None
@@ -112,3 +180,29 @@ def add_bun_compile_flags(args, attr, compile_executable = None):
     add_flag_value(args, "--windows-version", getattr(attr, "windows_version", None))
     add_flag_value(args, "--windows-description", getattr(attr, "windows_description", None))
     add_flag_value(args, "--windows-copyright", getattr(attr, "windows_copyright", None))
+
+def declare_staged_bun_build_action(ctx, bun_bin, build_args, build_inputs, outputs, mnemonic, progress_message, name_suffix):
+    sorted_inputs = sort_files_by_short_path(build_inputs.to_list())
+    input_manifest = ctx.actions.declare_file(ctx.label.name + name_suffix + ".inputs")
+    runner = ctx.actions.declare_file(ctx.label.name + name_suffix + "_runner.js")
+
+    ctx.actions.write(
+        output = input_manifest,
+        content = "".join([file.path + "\n" for file in sorted_inputs]),
+    )
+    ctx.actions.write(
+        output = runner,
+        content = _STAGED_BUILD_RUNNER,
+    )
+
+    ctx.actions.run(
+        executable = bun_bin,
+        arguments = ["--bun", runner.path, input_manifest.path, build_args],
+        inputs = depset(
+            direct = [input_manifest, runner],
+            transitive = [build_inputs],
+        ),
+        outputs = outputs,
+        mnemonic = mnemonic,
+        progress_message = progress_message,
+    )

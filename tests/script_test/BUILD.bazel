@@ -1,32 +1,37 @@
-load("//bun:defs.bzl", "bun_script")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("//bun:defs.bzl", "bun_script")
 
 bun_script(
     name = "hello_script",
-    script = "hello",
-    package_json = "package.json",
     data = ["hello.ts"],
+    package_json = "package.json",
+    script = "hello",
 )
 
 sh_test(
     name = "bun_script_ts_test",
+    size = "small",
     srcs = ["run_script.sh"],
-    args = ["$(location :hello_script)", "hello-script"],
+    args = [
+        "$(location :hello_script)",
+        "hello-script",
+    ],
     data = [":hello_script"],
 )
 
 bun_script(
     name = "env_script",
-    script = "print-env",
-    package_json = "package.json",
     data = [
         ".env",
         "env.ts",
     ],
+    package_json = "package.json",
+    script = "print-env",
 )
 
 sh_test(
     name = "bun_script_package_cwd_test",
+    size = "small",
     srcs = ["run_env_script.sh"],
     args = ["$(location :env_script)"],
     data = [":env_script"],
@@ -34,17 +39,18 @@ sh_test(
 
 bun_script(
     name = "vite_dev_server",
-    script = "dev",
-    package_json = "vite_app/package.json",
-    node_modules = "@script_test_vite_node_modules//:node_modules",
     data = [
         "vite_app/index.html",
         "vite_app/main.js",
     ],
+    node_modules = "@script_test_vite_node_modules//:node_modules",
+    package_json = "vite_app/package.json",
+    script = "dev",
 )
 
 sh_test(
     name = "bun_script_vite_app_test",
+    size = "small",
     srcs = ["run_vite_app.sh"],
     args = ["$(location :vite_dev_server)"],
     data = [":vite_dev_server"],
@@ -52,28 +58,29 @@ sh_test(
 
 bun_script(
     name = "vite_monorepo_app_a_dev_server",
-    script = "dev",
-    package_json = "vite_monorepo/apps/app-a/package.json",
-    node_modules = "@script_test_vite_monorepo_node_modules//:node_modules",
     data = [
         "vite_monorepo/apps/app-a/index.html",
         "vite_monorepo/apps/app-a/main.js",
     ],
+    node_modules = "@script_test_vite_monorepo_node_modules//:node_modules",
+    package_json = "vite_monorepo/apps/app-a/package.json",
+    script = "dev",
 )
 
 bun_script(
     name = "vite_monorepo_app_b_dev_server",
-    script = "dev",
-    package_json = "vite_monorepo/apps/app-b/package.json",
-    node_modules = "@script_test_vite_monorepo_node_modules//:node_modules",
     data = [
         "vite_monorepo/apps/app-b/index.html",
         "vite_monorepo/apps/app-b/main.js",
     ],
+    node_modules = "@script_test_vite_monorepo_node_modules//:node_modules",
+    package_json = "vite_monorepo/apps/app-b/package.json",
+    script = "dev",
 )
 
 sh_test(
     name = "bun_script_vite_monorepo_apps_test",
+    size = "small",
     srcs = ["run_vite_monorepo_apps.sh"],
     args = [
         "$(location :vite_monorepo_app_a_dev_server)",
@@ -85,54 +92,69 @@ sh_test(
     ],
 )
 
+sh_test(
+    name = "bun_script_monorepo_launcher_shape_test",
+    size = "small",
+    srcs = ["verify_monorepo_launcher_shape.sh"],
+    args = [
+        "$(location :vite_monorepo_app_a_dev_server)",
+        "$(location :paraglide_monorepo_app_a_build)",
+    ],
+    data = [
+        ":paraglide_monorepo_app_a_build",
+        ":vite_monorepo_app_a_dev_server",
+    ],
+)
+
 bun_script(
     name = "paraglide_monorepo_app_a_build",
-    script = "build:app-a",
-    package_json = "paraglide_monorepo/package.json",
-    node_modules = "@script_test_paraglide_monorepo_node_modules//:node_modules",
     data = [
-        "paraglide_monorepo/scripts/build-app-a.mjs",
-        "paraglide_monorepo/scripts/build-app-b.mjs",
-        "paraglide_monorepo/packages/i18n/package.json",
-        "paraglide_monorepo/packages/i18n/project.inlang/settings.json",
-        "paraglide_monorepo/packages/i18n/messages/en.json",
-        "paraglide_monorepo/packages/i18n/messages/sv.json",
-        "paraglide_monorepo/packages/app-a/package.json",
         "paraglide_monorepo/packages/app-a/index.html",
         "paraglide_monorepo/packages/app-a/main.js",
+        "paraglide_monorepo/packages/app-a/package.json",
         "paraglide_monorepo/packages/app-a/vite.config.js",
-        "paraglide_monorepo/packages/app-b/package.json",
         "paraglide_monorepo/packages/app-b/index.html",
         "paraglide_monorepo/packages/app-b/main.js",
+        "paraglide_monorepo/packages/app-b/package.json",
         "paraglide_monorepo/packages/app-b/vite.config.js",
+        "paraglide_monorepo/packages/i18n/messages/en.json",
+        "paraglide_monorepo/packages/i18n/messages/sv.json",
+        "paraglide_monorepo/packages/i18n/package.json",
+        "paraglide_monorepo/packages/i18n/project.inlang/settings.json",
+        "paraglide_monorepo/scripts/build-app-a.mjs",
+        "paraglide_monorepo/scripts/build-app-b.mjs",
     ],
+    node_modules = "@script_test_paraglide_monorepo_node_modules//:node_modules",
+    package_json = "paraglide_monorepo/package.json",
+    script = "build:app-a",
 )
 
 bun_script(
     name = "paraglide_monorepo_app_b_build",
-    script = "build:app-b",
-    package_json = "paraglide_monorepo/package.json",
-    node_modules = "@script_test_paraglide_monorepo_node_modules//:node_modules",
     data = [
-        "paraglide_monorepo/scripts/build-app-a.mjs",
-        "paraglide_monorepo/scripts/build-app-b.mjs",
-        "paraglide_monorepo/packages/i18n/package.json",
-        "paraglide_monorepo/packages/i18n/project.inlang/settings.json",
-        "paraglide_monorepo/packages/i18n/messages/en.json",
-        "paraglide_monorepo/packages/i18n/messages/sv.json",
-        "paraglide_monorepo/packages/app-a/package.json",
         "paraglide_monorepo/packages/app-a/index.html",
         "paraglide_monorepo/packages/app-a/main.js",
+        "paraglide_monorepo/packages/app-a/package.json",
         "paraglide_monorepo/packages/app-a/vite.config.js",
-        "paraglide_monorepo/packages/app-b/package.json",
         "paraglide_monorepo/packages/app-b/index.html",
         "paraglide_monorepo/packages/app-b/main.js",
+        "paraglide_monorepo/packages/app-b/package.json",
         "paraglide_monorepo/packages/app-b/vite.config.js",
+        "paraglide_monorepo/packages/i18n/messages/en.json",
+        "paraglide_monorepo/packages/i18n/messages/sv.json",
+        "paraglide_monorepo/packages/i18n/package.json",
+        "paraglide_monorepo/packages/i18n/project.inlang/settings.json",
+        "paraglide_monorepo/scripts/build-app-a.mjs",
+        "paraglide_monorepo/scripts/build-app-b.mjs",
     ],
+    node_modules = "@script_test_paraglide_monorepo_node_modules//:node_modules",
+    package_json = "paraglide_monorepo/package.json",
+    script = "build:app-b",
 )
 
 sh_test(
     name = "bun_script_paraglide_monorepo_build_test",
+    size = "small",
     srcs = ["run_paraglide_monorepo_builds.sh"],
     args = [
         "$(location :paraglide_monorepo_app_a_build)",
@@ -146,21 +168,22 @@ sh_test(
 
 bun_script(
     name = "workspace_filtered_script",
-    script = "say",
-    package_json = "workspace_run/package.json",
     data = [
         "workspace_run/packages/pkg-a/package.json",
         "workspace_run/packages/pkg-a/say.ts",
         "workspace_run/packages/pkg-b/package.json",
         "workspace_run/packages/pkg-b/say.ts",
     ],
-    filters = ["./packages/pkg-a"],
     execution_mode = "sequential",
+    filters = ["./packages/pkg-a"],
+    package_json = "workspace_run/package.json",
+    script = "say",
     silent = True,
 )
 
 sh_test(
     name = "bun_script_workspace_filter_test",
+    size = "small",
     srcs = ["run_workspace_script.sh"],
     args = ["$(location :workspace_filtered_script)"],
     data = [":workspace_filtered_script"],
@@ -168,20 +191,21 @@ sh_test(
 
 bun_script(
     name = "workspace_parallel_script",
-    script = "say",
-    package_json = "workspace_run/package.json",
     data = [
         "workspace_run/packages/pkg-a/package.json",
         "workspace_run/packages/pkg-a/say.ts",
         "workspace_run/packages/pkg-b/package.json",
         "workspace_run/packages/pkg-b/say.ts",
     ],
-    workspaces = True,
     execution_mode = "parallel",
+    package_json = "workspace_run/package.json",
+    script = "say",
+    workspaces = True,
 )
 
 sh_test(
     name = "bun_script_workspace_parallel_test",
+    size = "small",
     srcs = ["run_workspace_parallel.sh"],
     args = ["$(location :workspace_parallel_script)"],
     data = [":workspace_parallel_script"],
@@ -189,22 +213,24 @@ sh_test(
 
 bun_script(
     name = "workspace_flagged_script",
-    script = "say",
-    package_json = "workspace_run/package.json",
     data = [
         "workspace_run/packages/pkg-a/package.json",
         "workspace_run/packages/pkg-a/say.ts",
         "workspace_run/packages/pkg-b/package.json",
         "workspace_run/packages/pkg-b/say.ts",
     ],
-    workspaces = True,
     execution_mode = "parallel",
     no_exit_on_error = True,
+    package_json = "workspace_run/package.json",
+    script = "say",
     shell = "system",
+    visibility = ["//tests/ci_test:__pkg__"],
+    workspaces = True,
 )
 
 sh_test(
     name = "bun_script_workspace_flag_shape_test",
+    size = "small",
     srcs = ["verify_launcher_flags.sh"],
     args = [
         "$(location :workspace_flagged_script)",

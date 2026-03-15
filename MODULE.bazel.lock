@@ -192,7 +192,7 @@
   "moduleExtensions": {
     "//bun:extensions.bzl%bun": {
       "general": {
-        "bzlTransitiveDigest": "lzOUyaXDbkH922ruNkkwEF2cnI4m0XpzrOti0qypwtA=",
+        "bzlTransitiveDigest": "314UOH4dQIGBHGpxCwA7yzI++E2J3bjIc20m5MZhM7U=",
         "usagesDigest": "iOEuN6Lhr5Bejh9GRDT3yaCI7umBsNZo5CLQSzt+tNQ=",
         "recordedInputs": [
           "REPO_MAPPING:,bazel_tools bazel_tools"
@@ -283,7 +283,7 @@
     },
     "//bun:extensions.bzl%bun_install": {
       "general": {
-        "bzlTransitiveDigest": "lzOUyaXDbkH922ruNkkwEF2cnI4m0XpzrOti0qypwtA=",
+        "bzlTransitiveDigest": "314UOH4dQIGBHGpxCwA7yzI++E2J3bjIc20m5MZhM7U=",
         "usagesDigest": "eD/dECSVWIFS/qMgEXZ6501CimKmsHt7yTIFPX4XdLo=",
         "recordedInputs": [
           "REPO_MAPPING:,bazel_tools bazel_tools"
@@ -300,7 +300,7 @@
               "omit": [],
               "linker": "",
               "backend": "",
-              "ignore_scripts": false,
+              "ignore_scripts": true,
               "install_flags": [],
               "visible_repo_name": "script_test_vite_node_modules"
             }
@@ -316,7 +316,7 @@
               "omit": [],
               "linker": "",
               "backend": "",
-              "ignore_scripts": false,
+              "ignore_scripts": true,
               "install_flags": [],
               "visible_repo_name": "script_test_vite_monorepo_node_modules"
             }
@@ -332,7 +332,7 @@
               "omit": [],
               "linker": "",
               "backend": "",
-              "ignore_scripts": false,
+              "ignore_scripts": true,
               "install_flags": [],
               "visible_repo_name": "script_test_paraglide_monorepo_node_modules"
             }
@@ -348,7 +348,7 @@
               "omit": [],
               "linker": "",
               "backend": "",
-              "ignore_scripts": false,
+              "ignore_scripts": true,
               "install_flags": [],
               "visible_repo_name": "examples_vite_monorepo_node_modules"
             }

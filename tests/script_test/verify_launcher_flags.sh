@@ -1,12 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-binary="$1"
+launcher="$1"
 shift
 
-for expected in "$@"; do
-  if ! grep -Fq -- "${expected}" "${binary}"; then
-    echo "Expected ${binary} to contain ${expected}" >&2
-    exit 1
-  fi
-done
+python3 - "${launcher}" "$@" <<'PY'
+import json
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+if path.suffix.lower() == ".cmd":
+    path = pathlib.Path(str(path)[:-4])
+spec = json.loads(pathlib.Path(f"{path}.launcher.json").read_text())
+argv = spec["argv"]
+
+for value in sys.argv[2:]:
+    if value not in argv:
+        raise SystemExit(f"missing {value!r} in argv {argv!r}")
+PY

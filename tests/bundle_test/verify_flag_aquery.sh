@@ -68,8 +68,6 @@ expect_line() {
 build_output="$(run_aquery "BunBuild" "//tests/bundle_test:advanced_site_build")"
 
 for expected in \
-  'arguments: "--install"' \
-  'arguments: "fallback"' \
   'arguments: "--target"' \
   'arguments: "node"' \
   'arguments: "--format"' \

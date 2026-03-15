@@ -205,8 +205,14 @@ def _materialize_workspace_packages(repository_ctx, package_json):
             workspace_packages[relative_dir] = package_name if type(package_name) == type("") else ""
 
     package_dirs = sorted(workspace_packages.keys())
+    package_names_by_dir = {}
+    for package_dir in package_dirs:
+        package_name = workspace_packages[package_dir]
+        if package_name:
+            package_names_by_dir[package_dir] = package_name
     return struct(
         package_dirs = package_dirs,
+        package_names_by_dir = package_names_by_dir,
         package_names = [workspace_packages[package_dir] for package_dir in package_dirs if workspace_packages[package_dir]],
     )
 
@@ -381,8 +387,10 @@ stderr:
         "node_modules/.rules_bun/install.json",
         json.encode({
             "bun_lockfile": lockfile_name,
+            "install_root_rel_dir": ".",
             "package_json": "package.json",
             "workspace_package_dirs": workspace_packages.package_dirs,
+            "workspace_package_names_by_dir": workspace_packages.package_names_by_dir,
         }) + "\n",
     )
 
@@ -409,7 +417,7 @@ bun_install_repository = repository_rule(
         "omit": attr.string_list(),
         "linker": attr.string(),
         "backend": attr.string(),
-        "ignore_scripts": attr.bool(default = False),
+        "ignore_scripts": attr.bool(default = True),
         "install_flags": attr.string_list(),
         "visible_repo_name": attr.string(),
         "bun_linux_x64": attr.label(default = "@bun_linux_x64//:bun-linux-x64/bun", allow_single_file = True),
@@ -430,7 +438,7 @@ def bun_install(
         omit = [],
         linker = "",
         backend = "",
-        ignore_scripts = False,
+        ignore_scripts = True,
         install_flags = []):
     """Create an external repository containing installed node_modules.
 

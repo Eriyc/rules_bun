@@ -82,3 +82,32 @@ def add_install_mode(args, install_mode):
         args.add("--no-install")
     elif install_mode in ["fallback", "force"]:
         add_flag_value(args, "--install", install_mode)
+
+def append_arg(values, value):
+    values.append(str(value))
+
+def append_flag(values, flag, enabled):
+    if enabled:
+        append_arg(values, flag)
+
+def append_flag_value(values, flag, value):
+    if value == None:
+        return
+    if type(value) == type("") and not value:
+        return
+    append_arg(values, flag)
+    append_arg(values, value)
+
+def append_flag_values(values, flag, items):
+    for item in items:
+        append_flag_value(values, flag, item)
+
+def append_raw_flags(values, items):
+    for item in items:
+        append_arg(values, item)
+
+def append_install_mode(values, install_mode):
+    if install_mode == "disable":
+        append_arg(values, "--no-install")
+    elif install_mode in ["fallback", "force"]:
+        append_flag_value(values, "--install", install_mode)

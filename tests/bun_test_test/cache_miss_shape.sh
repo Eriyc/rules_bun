@@ -1,8 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-rule_file="$1"
+launcher="$1"
 
-grep -Fq 'extra_files = ctx.files.srcs + ctx.files.data + ctx.files.preload + ctx.files.env_files + [bun_bin]' "${rule_file}"
-grep -Eq '"srcs": attr\.label_list\(' "${rule_file}"
-grep -Eq '"coverage": attr\.bool\(' "${rule_file}"
+python3 - "${launcher}" <<'PY'
+import json
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+if path.suffix.lower() == ".cmd":
+    path = pathlib.Path(str(path)[:-4])
+spec = json.loads(pathlib.Path(f"{path}.launcher.json").read_text())
+
+assert spec["coverage"] is True, spec
+assert spec["preload_short_paths"], spec
+assert spec["env_file_short_paths"], spec
+assert spec["test_short_paths"], spec
+PY

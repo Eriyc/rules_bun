@@ -1,5 +1,5 @@
-load("//js:defs.bzl", "js_binary", "js_run_devserver", "js_test", "ts_library")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("//js:defs.bzl", "js_binary", "js_run_devserver", "js_test", "ts_library")
 
 ts_library(
     name = "helper_lib",
@@ -9,13 +9,14 @@ ts_library(
 
 js_binary(
     name = "compat_bin",
+    args = ["compat-mode"],
     entry_point = "main.ts",
     deps = [":helper_lib"],
-    args = ["compat-mode"],
 )
 
 sh_test(
     name = "js_binary_compat_test",
+    size = "small",
     srcs = ["run_binary.sh"],
     args = ["$(location :compat_bin)"],
     data = [":compat_bin"],
@@ -23,18 +24,21 @@ sh_test(
 
 js_test(
     name = "compat_suite",
+    size = "small",
     entry_point = "app.test.ts",
     deps = [":helper_lib"],
 )
 
 js_run_devserver(
     name = "compat_devserver",
-    tool = ":compat_bin",
     args = ["devserver-mode"],
+    tool = ":compat_bin",
+    visibility = ["//tests/ci_test:__pkg__"],
 )
 
 sh_test(
     name = "js_run_devserver_compat_test",
+    size = "small",
     srcs = ["run_devserver.sh"],
     args = ["$(location :compat_devserver)"],
     data = [":compat_devserver"],
@@ -42,27 +46,28 @@ sh_test(
 
 js_run_devserver(
     name = "compat_devserver_with_package_json",
-    tool = ":compat_bin",
     package_json = "app/package.json",
+    tool = ":compat_bin",
     working_dir = "package",
 )
 
 js_run_devserver(
     name = "compat_devserver_with_package_dir_hint",
-    tool = ":compat_bin",
     package_dir_hint = "app",
+    tool = ":compat_bin",
     working_dir = "package",
 )
 
 sh_test(
     name = "js_run_devserver_workspace_shape_test",
+    size = "small",
     srcs = ["verify_workspace_shape.sh"],
     args = [
         "$(location :compat_devserver_with_package_json)",
         "$(location :compat_devserver_with_package_dir_hint)",
     ],
     data = [
-        ":compat_devserver_with_package_json",
         ":compat_devserver_with_package_dir_hint",
+        ":compat_devserver_with_package_json",
     ],
 )

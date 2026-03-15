@@ -20,6 +20,21 @@ Unlike the build rules in [rules.md](rules.md), `bun_install` is not loaded from
 The generated repository can then be passed to rules such as `bun_script`,
 `bun_binary`, `bun_bundle`, and `bun_test`.
 
+## Hermeticity
+
+`bun_install` is a repository convenience rule, not a hermetic build action.
+It is intended to be reproducible from a checked-in lockfile and pinned Bun
+toolchain, but it still performs dependency fetching as part of repository
+materialization.
+
+Strict defaults now favor reproducibility:
+
+- `isolated_home = True`
+- `ignore_scripts = True`
+
+Set `ignore_scripts = False` only when you explicitly want lifecycle scripts to
+run during repository creation.
+
 ## Usage
 
 ```starlark
@@ -150,6 +165,9 @@ Examples include `hardlink`, `symlink`, and `copyfile`.
 Optional boolean controlling whether Bun skips lifecycle scripts in the project
 manifest.
 
+- `True` (default): skips lifecycle scripts for stricter, more reproducible installs
+- `False`: allows lifecycle scripts to run during repository creation
+
 ### `install_flags`
 
 Optional list of additional raw flags forwarded to `bun install`.
@@ -164,3 +182,5 @@ Optional list of additional raw flags forwarded to `bun install`.
   `package.json`.
 - Additional `install_inputs` must be files under the same package root as the
   selected `package_json`.
+- `bun_install` does not make the install step remotely hermetic; it makes the
+  generated repository stricter and more reproducible by default.

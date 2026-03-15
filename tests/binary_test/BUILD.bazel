@@ -1,5 +1,5 @@
-load("//bun:defs.bzl", "bun_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("//bun:defs.bzl", "bun_binary")
 
 bun_binary(
     name = "hello_js_bin",
@@ -8,8 +8,12 @@ bun_binary(
 
 sh_test(
     name = "bun_binary_js_test",
+    size = "small",
     srcs = ["run_binary.sh"],
-    args = ["$(location :hello_js_bin)", "hello-js"],
+    args = [
+        "$(location :hello_js_bin)",
+        "hello-js",
+    ],
     data = [":hello_js_bin"],
 )
 
@@ -20,19 +24,24 @@ bun_binary(
 
 sh_test(
     name = "bun_binary_ts_test",
+    size = "small",
     srcs = ["run_binary.sh"],
-    args = ["$(location :hello_ts_bin)", "hello-ts"],
+    args = [
+        "$(location :hello_ts_bin)",
+        "hello-ts",
+    ],
     data = [":hello_ts_bin"],
 )
 
 bun_binary(
     name = "hello_js_with_data_bin",
-    entry_point = "hello.js",
     data = ["payload.txt"],
+    entry_point = "hello.js",
 )
 
 sh_test(
     name = "bun_binary_data_test",
+    size = "small",
     srcs = ["verify_data_shape.sh"],
     args = [
         "$(location //internal:bun_binary.bzl)",
@@ -46,13 +55,14 @@ sh_test(
 
 bun_binary(
     name = "env_cwd_bin",
-    entry_point = "env.ts",
     data = [".env"],
+    entry_point = "env.ts",
     working_dir = "entry_point",
 )
 
 sh_test(
     name = "bun_binary_env_cwd_test",
+    size = "small",
     srcs = ["run_env_binary.sh"],
     args = ["$(location :env_cwd_bin)"],
     data = [":env_cwd_bin"],
@@ -60,13 +70,14 @@ sh_test(
 
 bun_binary(
     name = "env_parent_cwd_bin",
-    entry_point = "env_parent/src/main.ts",
     data = ["env_parent/.env"],
+    entry_point = "env_parent/src/main.ts",
     working_dir = "entry_point",
 )
 
 sh_test(
     name = "bun_binary_env_parent_cwd_test",
+    size = "small",
     srcs = ["run_parent_env_binary.sh"],
     args = ["$(location :env_parent_cwd_bin)"],
     data = [":env_parent_cwd_bin"],
@@ -74,14 +85,18 @@ sh_test(
 
 bun_binary(
     name = "runtime_flag_bin",
+    args = [
+        "one",
+        "two",
+    ],
     entry_point = "flag_probe.ts",
-    args = ["one", "two"],
-    preload = ["preload.ts"],
     env_files = ["runtime.env"],
+    preload = ["preload.ts"],
 )
 
 sh_test(
     name = "bun_binary_runtime_flags_test",
+    size = "small",
     srcs = ["run_flag_binary.sh"],
     args = ["$(location :runtime_flag_bin)"],
     data = [":runtime_flag_bin"],
@@ -89,6 +104,7 @@ sh_test(
 
 sh_test(
     name = "bun_binary_runtime_flags_shape_test",
+    size = "small",
     srcs = ["verify_runtime_flags_shape.sh"],
     args = ["$(location :runtime_flag_bin)"],
     data = [":runtime_flag_bin"],
@@ -96,24 +112,52 @@ sh_test(
 
 bun_binary(
     name = "configured_launcher_bin",
-    entry_point = "hello.ts",
-    node_modules = "@script_test_vite_node_modules//:node_modules",
-    smol = True,
     conditions = [
         "browser",
         "development",
     ],
+    entry_point = "hello.ts",
+    inherit_host_path = True,
     install_mode = "force",
+    node_modules = "@script_test_vite_node_modules//:node_modules",
     run_flags = [
         "--hot",
         "--console-depth",
         "4",
     ],
+    smol = True,
+    visibility = ["//tests/ci_test:__pkg__"],
 )
 
 sh_test(
     name = "bun_binary_configured_launcher_shape_test",
+    size = "small",
     srcs = ["verify_configured_launcher_shape.sh"],
     args = ["$(location :configured_launcher_bin)"],
     data = [":configured_launcher_bin"],
+)
+
+bun_binary(
+    name = "path_default_bin",
+    entry_point = "path_probe.ts",
+)
+
+bun_binary(
+    name = "path_inherit_bin",
+    entry_point = "path_probe.ts",
+    inherit_host_path = True,
+)
+
+sh_test(
+    name = "bun_binary_host_path_test",
+    size = "small",
+    srcs = ["run_path_binary.sh"],
+    args = [
+        "$(location :path_default_bin)",
+        "$(location :path_inherit_bin)",
+    ],
+    data = [
+        ":path_default_bin",
+        ":path_inherit_bin",
+    ],
 )

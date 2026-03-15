@@ -10,13 +10,28 @@ cleanup() {
 }
 trap cleanup EXIT
 
+run_launcher() {
+  local launcher="$1"
+  shift
+  if [[ ${launcher} == *.cmd ]]; then
+    local command
+    printf -v command '"%s"' "${launcher}"
+    for arg in "$@"; do
+      printf -v command '%s "%s"' "${command}" "${arg}"
+    done
+    cmd.exe /c "${command}" | tr -d '\r'
+    return 0
+  fi
+  "${launcher}" "$@"
+}
+
 verify_build() {
   local binary="$1"
   local out_dir="$2"
   local expected_title="$3"
   local expected_text="$4"
 
-  "${binary}" --outDir "${out_dir}" >/dev/null
+  run_launcher "${binary}" --outDir "${out_dir}" >/dev/null
 
   if [[ ! -f "${out_dir}/index.html" ]]; then
     echo "missing build output index.html for ${binary}" >&2

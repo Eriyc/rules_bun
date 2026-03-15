@@ -14,8 +14,24 @@ cleanup() {
 }
 trap cleanup EXIT
 
-"${binary}" >"${log_file}" 2>&1 &
-server_pid=$!
+start_launcher() {
+  local launcher="$1"
+  local log_target="$2"
+  shift 2
+  if [[ ${launcher} == *.cmd ]]; then
+    local command
+    printf -v command '"%s"' "${launcher}"
+    for arg in "$@"; do
+      printf -v command '%s "%s"' "${command}" "${arg}"
+    done
+    cmd.exe /c "${command}" >"${log_target}" 2>&1 &
+  else
+    "${launcher}" "$@" >"${log_target}" 2>&1 &
+  fi
+  server_pid=$!
+}
+
+start_launcher "${binary}" "${log_file}"
 
 for _ in {1..20}; do
   if grep -Fq "rules_bun bun_dev example" "${log_file}"; then

@@ -1,7 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-rule_file="$1"
+launcher="$1"
 
-grep -Fq 'launcher_lines = [render_shell_array("bun_args", ["--bun", "test"])]' "${rule_file}"
-grep -Fq 'exec "${bun_bin}" "${bun_args[@]}" "$@"' "${rule_file}"
+python3 - "${launcher}" <<'PY'
+import json
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+if path.suffix.lower() == ".cmd":
+    path = pathlib.Path(str(path)[:-4])
+spec = json.loads(pathlib.Path(f"{path}.launcher.json").read_text())
+
+assert spec["kind"] == "bun_test", spec
+assert spec["argv"][:2] == ["--bun", "test"], spec
+assert spec["test_short_paths"], spec
+PY

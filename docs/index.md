@@ -17,6 +17,13 @@ Supporting material lives in:
 - [docs/rules.md](rules.md) for generated build rule reference
 - [docs/bun_install.md](bun_install.md) for `bun_install` extension docs
 
+## Hermeticity
+
+- Hermetic rule surfaces: `bun_build`, `bun_bundle`, `bun_compile`, `bun_test`
+- Runfiles-only executable surface: `bun_binary`
+- Reproducible but non-hermetic repository surface: `bun_install`
+- Local workflow helpers: `bun_script`, `bun_dev`, `js_run_devserver`
+
 ## Rule reference
 
 - [rules.md](rules.md)

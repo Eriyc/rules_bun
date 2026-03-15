@@ -1,5 +1,5 @@
-load("//bun:defs.bzl", "bun_build", "bun_bundle", "bun_compile")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("//bun:defs.bzl", "bun_build", "bun_bundle", "bun_compile")
 
 bun_bundle(
     name = "simple_bundle",
@@ -18,64 +18,53 @@ bun_bundle(
     external = ["left-pad"],
 )
 
+bun_bundle(
+    name = "collision_bundle",
+    entry_points = [
+        "collision_case/a/main.ts",
+        "collision_case/b/main.ts",
+    ],
+)
+
 bun_build(
     name = "site_build",
-    entry_points = ["site/index.html"],
     data = [
         "site/main.ts",
         "site/styles.css",
     ],
+    entry_points = ["site/index.html"],
     splitting = True,
 )
 
 bun_build(
     name = "site_build_with_meta",
-    entry_points = ["site/index.html"],
     data = [
         "site/main.ts",
         "site/styles.css",
     ],
+    entry_points = ["site/index.html"],
     metafile = True,
     metafile_md = True,
 )
 
 bun_build(
     name = "advanced_site_build",
-    tags = ["manual"],
-    entry_points = ["site/index.html"],
-    data = [
-        "site/main.ts",
-        "site/styles.css",
-    ],
-    install_mode = "fallback",
-    target = "node",
-    format = "cjs",
-    production = True,
-    splitting = True,
-    root = "tests/bundle_test/site",
-    sourcemap = "linked",
-    banner = "/* bundle banner */",
-    footer = "// bundle footer",
-    public_path = "/static/",
-    packages = "external",
-    external = [
-        "left-pad",
-        "react",
-    ],
-    entry_naming = "entries/[name]-[hash].[ext]",
-    chunk_naming = "chunks/[name]-[hash].[ext]",
     asset_naming = "assets/[name]-[hash].[ext]",
-    minify = True,
-    minify_syntax = True,
-    minify_whitespace = True,
-    minify_identifiers = True,
-    keep_names = True,
-    css_chunking = True,
+    banner = "/* bundle banner */",
+    build_flags = [
+        "--app",
+        "--server-components",
+    ],
+    chunk_naming = "chunks/[name]-[hash].[ext]",
     conditions = [
         "browser",
         "custom",
     ],
-    env = "PUBLIC_*",
+    css_chunking = True,
+    data = [
+        "site/main.ts",
+        "site/styles.css",
+    ],
     define = [
         "process.env.NODE_ENV:\"production\"",
         "__DEV__:false",
@@ -84,26 +73,44 @@ bun_build(
         "console",
         "debugger",
     ],
+    emit_dce_annotations = True,
+    entry_naming = "entries/[name]-[hash].[ext]",
+    entry_points = ["site/index.html"],
+    env = "PUBLIC_*",
+    external = [
+        "left-pad",
+        "react",
+    ],
     feature = [
         "react_fast_refresh",
         "server_components",
     ],
-    loader = [
-        ".svg:file",
-        ".txt:text",
-    ],
+    footer = "// bundle footer",
+    format = "cjs",
     jsx_factory = "h",
     jsx_fragment = "Fragment",
     jsx_import_source = "preact",
     jsx_runtime = "automatic",
     jsx_side_effects = True,
-    react_fast_refresh = True,
-    emit_dce_annotations = True,
-    no_bundle = True,
-    build_flags = [
-        "--app",
-        "--server-components",
+    keep_names = True,
+    loader = [
+        ".svg:file",
+        ".txt:text",
     ],
+    minify = True,
+    minify_identifiers = True,
+    minify_syntax = True,
+    minify_whitespace = True,
+    no_bundle = True,
+    packages = "external",
+    production = True,
+    public_path = "/static/",
+    react_fast_refresh = True,
+    root = "tests/bundle_test/site",
+    sourcemap = "linked",
+    splitting = True,
+    tags = ["manual"],
+    target = "node",
 )
 
 bun_compile(
@@ -113,29 +120,30 @@ bun_compile(
 
 bun_compile(
     name = "compiled_cli_with_flags",
-    tags = ["manual"],
-    entry_point = "cli.ts",
     bytecode = True,
+    compile_autoload_bunfig = False,
+    compile_autoload_dotenv = False,
+    compile_autoload_package_json = True,
+    compile_autoload_tsconfig = True,
     compile_exec_argv = [
         "--smol",
         "--inspect-wait",
     ],
     compile_executable = "fake_cross_bun.bin",
-    compile_autoload_dotenv = False,
-    compile_autoload_bunfig = False,
-    compile_autoload_tsconfig = True,
-    compile_autoload_package_json = True,
+    entry_point = "cli.ts",
+    tags = ["manual"],
+    windows_copyright = "(c) rules_bun",
+    windows_description = "compile flag coverage",
     windows_hide_console = True,
     windows_icon = "branding/icon.ico",
-    windows_title = "Rules Bun Test App",
     windows_publisher = "rules_bun",
+    windows_title = "Rules Bun Test App",
     windows_version = "1.2.3.4",
-    windows_description = "compile flag coverage",
-    windows_copyright = "(c) rules_bun",
 )
 
 sh_test(
     name = "bundle_output_test",
+    size = "small",
     srcs = ["verify_bundle.sh"],
     args = ["$(location :simple_bundle)"],
     data = [":simple_bundle"],
@@ -143,19 +151,21 @@ sh_test(
 
 sh_test(
     name = "bundle_minify_test",
+    size = "small",
     srcs = ["verify_minify.sh"],
     args = [
         "$(location :simple_bundle)",
         "$(location :minified_bundle)",
     ],
     data = [
-        ":simple_bundle",
         ":minified_bundle",
+        ":simple_bundle",
     ],
 )
 
 sh_test(
     name = "bundle_hermetic_digest_test",
+    size = "small",
     srcs = ["verify_hermetic_shape.sh"],
     args = ["$(location //internal:bun_bundle.bzl)"],
     data = ["//internal:bun_bundle.bzl"],
@@ -163,6 +173,7 @@ sh_test(
 
 sh_test(
     name = "bundle_external_exclusion_test",
+    size = "small",
     srcs = ["verify_external_shape.sh"],
     args = [
         "$(location //internal:bun_bundle.bzl)",
@@ -175,21 +186,31 @@ sh_test(
 )
 
 sh_test(
+    name = "bundle_collision_output_test",
+    size = "small",
+    srcs = ["verify_collision_outputs.sh"],
+    args = ["$(locations :collision_bundle)"],
+    data = [":collision_bundle"],
+)
+
+sh_test(
     name = "bundle_sourcemap_shape_test",
+    size = "small",
     srcs = ["verify_sourcemap_shape.sh"],
-    env_inherit = ["PATH"],
     data = [
+        "BUILD.bazel",
         "//:repo_runtime_files",
         "//bun:repo_runtime_files",
         "//internal:repo_runtime_files",
-        "BUILD.bazel",
         "//tests/bundle_test/sourcemap_case:BUILD.bazel",
         "//tests/bundle_test/sourcemap_case:entry.ts",
     ],
+    env_inherit = ["PATH"],
 )
 
 sh_test(
     name = "bun_build_site_output_test",
+    size = "small",
     srcs = ["verify_site_build.sh"],
     args = ["$(location :site_build)"],
     data = [":site_build"],
@@ -197,6 +218,7 @@ sh_test(
 
 sh_test(
     name = "bun_build_site_meta_test",
+    size = "small",
     srcs = ["verify_site_build_meta.sh"],
     args = ["$(locations :site_build_with_meta)"],
     data = [":site_build_with_meta"],
@@ -204,6 +226,7 @@ sh_test(
 
 sh_test(
     name = "bun_compile_output_test",
+    size = "small",
     srcs = ["run_compiled_binary.sh"],
     args = ["$(location :compiled_cli)"],
     data = [":compiled_cli"],
@@ -211,17 +234,18 @@ sh_test(
 
 sh_test(
     name = "bun_build_compile_flag_shape_test",
+    size = "small",
     srcs = ["verify_flag_aquery.sh"],
-    env_inherit = ["PATH"],
     data = [
-        "//:repo_runtime_files",
-        "//bun:repo_runtime_files",
-        "//internal:repo_runtime_files",
         "BUILD.bazel",
         "cli.ts",
         "fake_cross_bun.bin",
         "site/index.html",
         "site/main.ts",
         "site/styles.css",
+        "//:repo_runtime_files",
+        "//bun:repo_runtime_files",
+        "//internal:repo_runtime_files",
     ],
+    env_inherit = ["PATH"],
 )

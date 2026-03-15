@@ -10,3 +10,4 @@ grep -Eq '"package_json":[[:space:]]*attr\.label\(mandatory[[:space:]]*=[[:space
 grep -Eq '"bun_lockfile":[[:space:]]*attr\.label\(mandatory[[:space:]]*=[[:space:]]*True\)' "${extension_file}"
 grep -Eq '"install_inputs":[[:space:]]*attr\.label_list\(allow_files[[:space:]]*=[[:space:]]*True\)' "${extension_file}"
 grep -Eq '"isolated_home":[[:space:]]*attr\.bool\(default[[:space:]]*=[[:space:]]*True\)' "${extension_file}"
+grep -Eq '"ignore_scripts":[[:space:]]*attr\.bool\(default[[:space:]]*=[[:space:]]*True\)' "${extension_file}"

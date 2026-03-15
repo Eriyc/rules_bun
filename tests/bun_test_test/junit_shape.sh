@@ -1,7 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-rule_file="$1"
+launcher="$1"
 
-grep -Fq 'reporter_out="${XML_OUTPUT_FILE:-${runtime_workspace}/junit.xml}"' "${rule_file}"
-grep -Fq 'bun_args+=("--reporter" "junit" "--reporter-outfile" "${reporter_out}")' "${rule_file}"
+python3 - "${launcher}" <<'PY'
+import json
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+if path.suffix.lower() == ".cmd":
+    path = pathlib.Path(str(path)[:-4])
+spec = json.loads(pathlib.Path(f"{path}.launcher.json").read_text())
+
+assert spec["reporter"] == "junit", spec
+PY

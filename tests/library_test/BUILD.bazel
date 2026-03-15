@@ -1,5 +1,5 @@
-load("//bun:defs.bzl", "bun_bundle", "bun_test", "ts_library")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("//bun:defs.bzl", "bun_bundle", "bun_test", "ts_library")
 
 ts_library(
     name = "helper_lib",
@@ -14,6 +14,7 @@ bun_bundle(
 
 sh_test(
     name = "bundle_dep_propagation_test",
+    size = "small",
     srcs = ["verify_bundle.sh"],
     args = ["$(location :bundle_with_deps)"],
     data = [":bundle_with_deps"],
@@ -21,6 +22,7 @@ sh_test(
 
 bun_test(
     name = "test_with_deps",
+    size = "small",
     srcs = ["app.test.ts"],
     deps = [":helper_lib"],
 )

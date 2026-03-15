@@ -3,42 +3,62 @@ load("//bun:defs.bzl", "bun_test")
 
 bun_test(
     name = "passing_suite",
+    size = "small",
     srcs = ["passing.test.ts"],
 )
 
 bun_test(
     name = "failing_suite",
+    size = "small",
     srcs = ["failing.test.ts"],
 )
 
 bun_test(
     name = "configured_suite",
+    size = "small",
     srcs = ["passing.test.ts"],
-    preload = ["preload.ts"],
-    env_files = ["test.env"],
-    no_env_file = True,
-    timeout_ms = 250,
-    update_snapshots = True,
-    rerun_each = 2,
-    concurrent = True,
-    randomize = True,
-    seed = 7,
     bail = 1,
-    reporter = "junit",
-    max_concurrency = 4,
+    concurrent = True,
     coverage = True,
     coverage_reporters = ["lcov"],
+    env_files = ["test.env"],
+    max_concurrency = 4,
+    no_env_file = True,
+    preload = ["preload.ts"],
+    randomize = True,
+    reporter = "junit",
+    rerun_each = 2,
+    seed = 7,
     test_flags = ["--only-failures"],
+    timeout_ms = 250,
+    update_snapshots = True,
+    visibility = ["//tests/ci_test:__pkg__"],
 )
 
 bun_test(
     name = "configured_retry_suite",
+    size = "small",
     srcs = ["passing.test.ts"],
     retry = 3,
 )
 
 sh_test(
+    name = "bun_test_configured_suite_shape_test",
+    size = "small",
+    srcs = ["configured_suite_shape.sh"],
+    args = [
+        "$(location :configured_suite)",
+        "$(location :configured_retry_suite)",
+    ],
+    data = [
+        ":configured_retry_suite",
+        ":configured_suite",
+    ],
+)
+
+sh_test(
     name = "bun_test_failing_suite_test",
+    size = "small",
     srcs = ["failing_suite_shape.sh"],
     args = ["$(location //tests/bun_test_test:BUILD.bazel)"],
     data = ["//tests/bun_test_test:BUILD.bazel"],
@@ -46,34 +66,24 @@ sh_test(
 
 sh_test(
     name = "bun_test_cache_hit_test",
+    size = "small",
     srcs = ["cache_hit_shape.sh"],
-    args = ["$(location //internal:bun_test.bzl)"],
-    data = ["//internal:bun_test.bzl"],
+    args = ["$(location :passing_suite)"],
+    data = [":passing_suite"],
 )
 
 sh_test(
     name = "bun_test_cache_miss_test",
+    size = "small",
     srcs = ["cache_miss_shape.sh"],
-    args = ["$(location //internal:bun_test.bzl)"],
-    data = ["//internal:bun_test.bzl"],
+    args = ["$(location :configured_suite)"],
+    data = [":configured_suite"],
 )
 
 sh_test(
     name = "bun_test_junit_output_test",
+    size = "small",
     srcs = ["junit_shape.sh"],
-    args = ["$(location //internal:bun_test.bzl)"],
-    data = ["//internal:bun_test.bzl"],
-)
-
-sh_test(
-    name = "bun_test_configured_suite_shape_test",
-    srcs = ["configured_suite_shape.sh"],
-    args = [
-        "$(location :configured_suite)",
-        "$(location :configured_retry_suite)",
-    ],
-    data = [
-        ":configured_suite",
-        ":configured_retry_suite",
-    ],
+    args = ["$(location :configured_suite)"],
+    data = [":configured_suite"],
 )

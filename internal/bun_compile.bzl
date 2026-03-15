@@ -1,10 +1,14 @@
 """Rules for Bun build outputs and standalone executables."""
 
-load("//internal:bun_build_support.bzl", "add_bun_build_common_flags", "add_bun_compile_flags", "bun_build_transitive_inputs", "infer_entry_point_root")
+load("//internal:bun_build_support.bzl", "add_bun_build_common_flags", "add_bun_compile_flags", "bun_build_transitive_inputs", "declare_staged_bun_build_action", "infer_entry_point_root", "sort_files_by_short_path", "validate_hermetic_install_mode")
 
 def _bun_build_impl(ctx):
+    validate_hermetic_install_mode(ctx.attr, "bun_build")
+
     toolchain = ctx.toolchains["//bun:toolchain_type"]
     bun_bin = toolchain.bun.bun_bin
+    entry_points = sort_files_by_short_path(ctx.files.entry_points)
+    data_files = sort_files_by_short_path(ctx.files.data)
     output_dir = ctx.actions.declare_directory(ctx.label.name)
     metafile = None
     if ctx.attr.metafile:
@@ -14,24 +18,20 @@ def _bun_build_impl(ctx):
         metafile_md = ctx.actions.declare_file(ctx.label.name + ".meta.md")
     build_root = ctx.attr.root
     if not build_root:
-        build_root = infer_entry_point_root(ctx.files.entry_points)
+        build_root = infer_entry_point_root(entry_points)
     transitive_inputs = bun_build_transitive_inputs(ctx)
     build_inputs = depset(
-        direct = ctx.files.entry_points + ctx.files.data,
+        direct = entry_points + data_files,
         transitive = transitive_inputs,
     )
-    input_manifest = ctx.actions.declare_file(ctx.label.name + ".inputs")
-    runner = ctx.actions.declare_file(ctx.label.name + "_runner.sh")
 
-    args = ctx.actions.args()
-    args.add(input_manifest.path)
-    args.add(bun_bin.path)
-    args.add("--bun")
-    args.add("build")
-    add_bun_build_common_flags(args, ctx.attr, metafile = metafile, metafile_md = metafile_md, root = build_root)
-    args.add("--outdir")
-    args.add(output_dir.path)
-    args.add_all(ctx.files.entry_points)
+    build_args = ctx.actions.args()
+    build_args.add("--bun")
+    build_args.add("build")
+    add_bun_build_common_flags(build_args, ctx.attr, metafile = metafile, metafile_md = metafile_md, root = build_root)
+    build_args.add("--outdir")
+    build_args.add(output_dir.path)
+    build_args.add_all(entry_points)
 
     outputs = [output_dir]
     if metafile:
@@ -39,87 +39,27 @@ def _bun_build_impl(ctx):
     if metafile_md:
         outputs.append(metafile_md)
 
-    ctx.actions.write(
-        output = input_manifest,
-        content = "".join([file.path + "\n" for file in build_inputs.to_list()]),
-    )
-
-    ctx.actions.write(
-        output = runner,
-        is_executable = True,
-        content = """#!/usr/bin/env bash
-set -euo pipefail
-
-manifest="$1"
-execroot="$(pwd -P)"
-bun_bin="$2"
-if [[ "${bun_bin}" != /* ]]; then
-  bun_bin="${execroot}/${bun_bin}"
-fi
-shift 2
-
-stage_dir="$(mktemp -d "${TMPDIR:-/tmp}/rules_bun_build.XXXXXX")"
-cleanup() {
-  rm -rf "${stage_dir}"
-}
-trap cleanup EXIT
-
-while IFS= read -r relpath; do
-  if [[ -z "${relpath}" ]]; then
-    continue
-  fi
-  src="${execroot}/${relpath}"
-  dest="${stage_dir}/${relpath}"
-  mkdir -p "$(dirname "${dest}")"
-  cp -L "${src}" "${dest}"
-done < "${manifest}"
-
-forwarded_args=()
-while (($#)); do
-  case "$1" in
-    --outdir)
-      forwarded_args+=("$1" "${execroot}/$2")
-      shift 2
-      ;;
-    --metafile=*)
-      forwarded_args+=("--metafile=${execroot}/${1#--metafile=}")
-      shift
-      ;;
-    --metafile-md=*)
-      forwarded_args+=("--metafile-md=${execroot}/${1#--metafile-md=}")
-      shift
-      ;;
-    *)
-      forwarded_args+=("$1")
-      shift
-      ;;
-  esac
-done
-
-cd "${stage_dir}"
-exec "${bun_bin}" "${forwarded_args[@]}"
-""",
-    )
-
-    ctx.actions.run(
-        executable = runner,
-        arguments = [args],
-        inputs = depset(
-            direct = [input_manifest, bun_bin],
-            transitive = [build_inputs],
-        ),
+    declare_staged_bun_build_action(
+        ctx,
+        bun_bin,
+        build_args,
+        build_inputs,
         outputs = outputs,
         mnemonic = "BunBuild",
         progress_message = "Building {} with Bun".format(ctx.label.name),
+        name_suffix = "_build",
     )
 
     return [DefaultInfo(files = depset(outputs))]
 
 def _bun_compile_impl(ctx):
+    validate_hermetic_install_mode(ctx.attr, "bun_compile")
+
     toolchain = ctx.toolchains["//bun:toolchain_type"]
     bun_bin = toolchain.bun.bun_bin
     output = ctx.actions.declare_file(ctx.label.name)
     compile_executable = ctx.file.compile_executable
+    data_files = sort_files_by_short_path(ctx.files.data)
 
     args = ctx.actions.args()
     args.add("--bun")
@@ -130,20 +70,22 @@ def _bun_compile_impl(ctx):
     args.add(output.path)
     args.add(ctx.file.entry_point.path)
 
-    direct_inputs = [ctx.file.entry_point] + ctx.files.data
+    direct_inputs = [ctx.file.entry_point] + data_files
     if compile_executable:
         direct_inputs.append(compile_executable)
 
-    ctx.actions.run(
-        executable = bun_bin,
-        arguments = [args],
-        inputs = depset(
+    declare_staged_bun_build_action(
+        ctx,
+        bun_bin,
+        args,
+        depset(
             direct = direct_inputs,
             transitive = bun_build_transitive_inputs(ctx),
         ),
         outputs = [output],
         mnemonic = "BunCompile",
         progress_message = "Compiling {} with Bun".format(ctx.file.entry_point.short_path),
+        name_suffix = "_compile",
     )
 
     return [
@@ -167,7 +109,7 @@ _COMMON_BUILD_ATTRS = {
     "install_mode": attr.string(
         default = "disable",
         values = ["disable", "auto", "fallback", "force"],
-        doc = "Whether Bun may auto-install missing packages while executing the build.",
+        doc = "Whether Bun may auto-install missing packages while executing the build. Hermetic build actions require `disable`; other values are rejected.",
     ),
     "target": attr.string(
         default = "browser",
