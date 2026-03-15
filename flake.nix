@@ -109,12 +109,6 @@
               banner.color = "YELLOW";
             })
             (repo-lib.lib.tools.fromPackage {
-              name = "Go";
-              package = pkgs.go;
-              version.args = [ "version" ];
-              banner.color = "CYAN";
-            })
-            (repo-lib.lib.tools.fromPackage {
               name = "Bazel";
               package = bazel9;
               version.args = [ "--version" ];
@@ -123,8 +117,6 @@
           ];
 
           shell.packages = [
-            pkgs.gopls
-            pkgs.gotools
             pkgs.bazel-buildtools
             self.packages.${system}.release
           ];
@@ -136,7 +128,6 @@
             runtimeInputs = [
               bazel9
               pkgs.bun
-              pkgs.go
             ];
           };
         };
