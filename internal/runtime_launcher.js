@@ -489,6 +489,31 @@ function materializeTreeContents(sourceRoot, destinationRoot) {
   }
 }
 
+function stageRuntimeToolAlias(sourcePath, destinationPath, preferLinks) {
+  removePath(destinationPath);
+  ensureDir(dirname(destinationPath));
+  if (preferLinks && !IS_WINDOWS) {
+    symlinkSync(sourcePath, destinationPath);
+    return;
+  }
+  copyPath(sourcePath, destinationPath);
+}
+
+function stageRuntimeToolBin(runtimeWorkspace, bunPath, preferLinks) {
+  const runtimeToolBin = join(runtimeWorkspace, ".rules_bun", "bin");
+  ensureDir(runtimeToolBin);
+
+  const bunName = IS_WINDOWS ? "bun.exe" : "bun";
+  const stagedBunPath = join(runtimeToolBin, bunName);
+  materializePath(realpathSync(bunPath), stagedBunPath, preferLinks);
+
+  for (const aliasName of IS_WINDOWS ? ["bunx.exe", "node.exe"] : ["bunx", "node"]) {
+    stageRuntimeToolAlias(stagedBunPath, join(runtimeToolBin, aliasName), preferLinks);
+  }
+
+  return runtimeToolBin;
+}
+
 function stageWorkspaceView(sourceRoot, destinationRoot, packageRelDir) {
   ensureDir(destinationRoot);
   const skippedEntry = firstPathComponent(packageRelDir);
@@ -765,8 +790,18 @@ function mirrorInstallRepoWorkspaceNodeModules(
   }
 }
 
-function buildRuntimePath(runtimeWorkspace, runtimePackageDir, runtimeInstallRoot, inheritHostPath) {
+function buildRuntimePath(
+  runtimeToolBin,
+  runtimeWorkspace,
+  runtimePackageDir,
+  runtimeInstallRoot,
+  inheritHostPath,
+) {
   const entries = [];
+
+  if (existsSync(runtimeToolBin) && statSync(runtimeToolBin).isDirectory()) {
+    entries.push(runtimeToolBin);
+  }
 
   const installBin = join(runtimeInstallRoot, "node_modules", ".bin");
   const packageBin = join(runtimePackageDir, "node_modules", ".bin");
@@ -915,9 +950,16 @@ function createRuntime(spec, runfiles) {
     materializePath(runtimeInstallNodeModules, runtimePackageNodeModules, preferLinks);
   }
 
+  const runtimeToolBin = stageRuntimeToolBin(
+    runtimeWorkspace,
+    runfiles.rlocation(spec.bun_short_path),
+    preferLinks,
+  );
+
   const env = { ...process.env };
   const pathKey = pathEnvKey(env);
   const runtimePath = buildRuntimePath(
+    runtimeToolBin,
     runtimeWorkspace,
     runtimePackageDir,
     runtimeInstallRoot,
@@ -992,12 +1034,31 @@ function composeBunArgs(spec, runfiles, runtime) {
   return args;
 }
 
+function isWindowsBatchFile(command) {
+  return IS_WINDOWS && /\.(cmd|bat)$/i.test(String(command || ""));
+}
+
+function quoteForWindowsShell(command) {
+  return `"${String(command).replace(/"/g, '""')}"`;
+}
+
+function spawnChild(command, args, options) {
+  const spawnOptions = {
+    ...options,
+    stdio: "inherit",
+  };
+  if (isWindowsBatchFile(command)) {
+    return spawn(quoteForWindowsShell(command), args, {
+      ...spawnOptions,
+      shell: true,
+    });
+  }
+  return spawn(command, args, spawnOptions);
+}
+
 function spawnProcess(command, args, options) {
   return new Promise((resolvePromise, rejectPromise) => {
-    const child = spawn(command, args, {
-      ...options,
-      stdio: "inherit",
-    });
+    const child = spawnChild(command, args, options);
     child.once("error", rejectPromise);
     child.once("exit", (code, signal) => {
       resolvePromise({ child, code, signal });
@@ -1077,10 +1138,9 @@ async function runDevMode(spec, runfiles, userArgs) {
     currentRuntime = createRuntime(spec, runfiles);
     const bunPath = runfiles.rlocation(spec.bun_short_path);
     const bunArgs = [...composeBunArgs(spec, runfiles, currentRuntime), watchFlag, ...passthroughArgs];
-    child = spawn(bunPath, bunArgs, {
+    child = spawnChild(bunPath, bunArgs, {
       cwd: currentRuntime.runtimeExecDir,
       env: currentRuntime.env,
-      stdio: "inherit",
     });
     exitPromise = new Promise((resolvePromise, rejectPromise) => {
       child.once("error", rejectPromise);

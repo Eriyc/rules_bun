@@ -7,12 +7,7 @@ run_launcher() {
   local launcher="$1"
   shift
   if [[ ${launcher} == *.cmd ]]; then
-    local command
-    printf -v command '"%s"' "${launcher}"
-    for arg in "$@"; do
-      printf -v command '%s "%s"' "${command}" "${arg}"
-    done
-    cmd.exe /c "${command}" | tr -d '\r'
+    cmd.exe /c call "${launcher}" "$@" | tr -d '\r'
     return 0
   fi
   "${launcher}" "$@"

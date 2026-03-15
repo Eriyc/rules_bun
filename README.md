@@ -66,7 +66,7 @@ Strict defaults are enabled by default:
 
 - `bun_install` skips lifecycle scripts unless `ignore_scripts = False`
 - `bun_build`, `bun_bundle`, `bun_compile`, and `bun_test` require `install_mode = "disable"`
-- Runtime launchers do not inherit the host `PATH` unless `inherit_host_path = True`
+- Runtime launchers stage hermetic `bun`, `bunx`, and `node` commands on `PATH` and do not inherit the host `PATH` unless `inherit_host_path = True`
 
 To refresh generated rule docs:
 
@@ -218,10 +218,11 @@ bun_script(
 )
 ```
 
-When `node_modules` is provided, executables from `node_modules/.bin` are added
-to the runtime `PATH`. The host `PATH` is not inherited unless
-`inherit_host_path = True`. This label typically comes from `bun_install`,
-which still produces a standard `node_modules/` directory.
+Launcher-based runtime rules stage hermetic `bun`, `bunx`, and `node`
+commands on `PATH`. When `node_modules` is provided, executables from
+`node_modules/.bin` are also added to the runtime `PATH`. The host `PATH` is
+not inherited unless `inherit_host_path = True`. This label typically comes
+from `bun_install`, which still produces a standard `node_modules/` directory.
 
 ### `bun_build` and `bun_compile`
 

@@ -83,7 +83,7 @@ _BUN_SCRIPT_ATTRS.update({
         doc = "Label of the `package.json` file containing the named script.",
     ),
     "node_modules": attr.label(
-        doc = "Optional label providing package files from a `node_modules` tree, typically produced by `bun_install`, in runfiles. Executables from `node_modules/.bin` are added to `PATH`, which is useful for scripts such as `vite`.",
+        doc = "Optional label providing package files from a `node_modules` tree, typically produced by `bun_install`, in runfiles. The staged Bun runtime tool bin and executables from `node_modules/.bin` are added to `PATH`, which is useful for scripts such as `vite`.",
     ),
     "data": attr.label_list(
         allow_files = True,
@@ -148,7 +148,7 @@ _BUN_SCRIPT_ATTRS.update({
     ),
     "inherit_host_path": attr.bool(
         default = False,
-        doc = "If true, appends the host PATH after staged node_modules/.bin entries at runtime.",
+        doc = "If true, appends the host PATH after the staged Bun runtime tool bin and node_modules/.bin entries at runtime.",
     ),
 })
 
@@ -159,8 +159,9 @@ bun_script = rule(
 Use this rule to expose existing package scripts such as `dev`, `build`, or
 `check` via `bazel run` without adding wrapper shell scripts. This is a good fit
 for Vite-style workflows, where scripts like `vite dev` or `vite build` are
-declared in `package.json` and expect to run from the package directory. This
-is a local workflow helper rather than a hermetic build rule.
+declared in `package.json` and expect to run from the package directory with
+the staged Bun runtime tool bin and `node_modules/.bin` on `PATH`. This is a
+local workflow helper rather than a hermetic build rule.
 """,
     attrs = _BUN_SCRIPT_ATTRS,
     executable = True,

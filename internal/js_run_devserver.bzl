@@ -92,7 +92,7 @@ _JS_RUN_DEVSERVER_ATTRS.update({
     ),
     "inherit_host_path": attr.bool(
         default = False,
-        doc = "If true, appends the host PATH after staged node_modules/.bin entries at runtime.",
+        doc = "If true, appends the host PATH after the staged Bun runtime tool bin and node_modules/.bin entries at runtime.",
     ),
 })
 

@@ -44,8 +44,8 @@ sh_test(
     size = "small",
     srcs = ["verify_data_shape.sh"],
     args = [
-        "$(location //internal:bun_binary.bzl)",
-        "$(location //tests/binary_test:BUILD.bazel)",
+        "$(rlocationpath //internal:bun_binary.bzl)",
+        "$(rlocationpath //tests/binary_test:BUILD.bazel)",
     ],
     data = [
         "//internal:bun_binary.bzl",

@@ -35,9 +35,48 @@ jobs:
           external-cache: true
           disk-cache: ci-${{ matrix.phase8_target }}
           cache-save: ${{ github.event_name != 'pull_request' }}
+      - name: Install Nix
+        if: runner.os != 'Windows'
+        uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - name: Restore and save Nix store cache
+        if: runner.os != 'Windows'
+        uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-
+      - name: Install flake dependencies
+        if: runner.os != 'Windows'
+        run: nix develop --accept-flake-config -c true
+      - name: Set up Python
+        if: runner.os == 'Windows'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Provide python3 shim
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          cat >"$RUNNER_TEMP/bin/python3" <<'EOF'
+          #!/usr/bin/env bash
+          exec python "$@"
+          EOF
+          chmod +x "$RUNNER_TEMP/bin/python3"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
       - name: Run tests (${{ matrix.phase8_target }})
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           echo "Phase 8 target: ${{ matrix.phase8_target }}"
-          targets="$(./tests/ci_test/phase8_ci_targets.sh "${{ matrix.phase8_target }}")"
-          bazel test --test_output=errors ${targets}
+          mapfile -t targets < <(./tests/ci_test/phase8_ci_targets.sh "${{ matrix.phase8_target }}")
+          nix develop --accept-flake-config -c bazel test --test_output=errors "${targets[@]}"
+      - name: Run tests (${{ matrix.phase8_target }})
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          echo "Phase 8 target: ${{ matrix.phase8_target }}"
+          mapfile -t targets < <(./tests/ci_test/phase8_ci_targets.sh "${{ matrix.phase8_target }}")
+          bazel test --test_output=errors "${targets[@]}"

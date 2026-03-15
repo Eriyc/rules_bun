@@ -19,12 +19,7 @@ start_launcher() {
   local log_target="$2"
   shift 2
   if [[ ${launcher} == *.cmd ]]; then
-    local command
-    printf -v command '"%s"' "${launcher}"
-    for arg in "$@"; do
-      printf -v command '%s "%s"' "${command}" "${arg}"
-    done
-    cmd.exe /c "${command}" >"${log_target}" 2>&1 &
+    cmd.exe /c call "${launcher}" "$@" >"${log_target}" 2>&1 &
   else
     "${launcher}" "$@" >"${log_target}" 2>&1 &
   fi

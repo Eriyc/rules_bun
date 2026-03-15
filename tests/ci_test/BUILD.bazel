@@ -4,7 +4,7 @@ sh_test(
     name = "phase8_ci_matrix_shape_test",
     size = "small",
     srcs = ["phase8_ci_matrix_shape_test.sh"],
-    args = ["$(location //.github/workflows:ci.yml)"],
+    args = ["$(rlocationpath //.github/workflows:ci.yml)"],
     data = ["//.github/workflows:ci.yml"],
 )
 
@@ -12,7 +12,7 @@ sh_test(
     name = "phase8_ci_targets_test",
     size = "small",
     srcs = ["phase8_ci_targets_test.sh"],
-    args = ["$(location :phase8_ci_targets.sh)"],
+    args = ["$(rlocationpath :phase8_ci_targets.sh)"],
     data = [":phase8_ci_targets.sh"],
 )
 

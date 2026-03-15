@@ -118,6 +118,8 @@
 
           shell.packages = [
             pkgs.bazel-buildtools
+            pkgs.curl
+            pkgs.python3
             self.packages.${system}.release
           ];
 
@@ -128,6 +130,8 @@
             runtimeInputs = [
               bazel9
               pkgs.bun
+              pkgs.curl
+              pkgs.python3
             ];
           };
         };
